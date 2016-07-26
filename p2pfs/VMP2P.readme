@@ -1,0 +1,99 @@
+
+*** Instructions to use:
+
+(from the p2pfs top level directory)
+
+if LD_LIBRARY_PATH is empty, then
+$ export LD_LIBRARY_PATH="`pwd`/libtorrent/src/.libs:`pwd`/boost/install/lib"
+
+else if LD_LIBRARY_PATH is non-empty, then:
+$ export LD_LIBRARY_PATH="LD_LIBRARY_PATH:`pwd`/libtorrent/src/.libs:`pwd`/boost/install/lib"
+
+
+*** Instructions to compile:
+$ ./build-deps		<-- this takes a while
+$ make			<-- this is long on the time
+
+
+*** Required packages
+
+libtool
+libssl-dev
+
+
+*** Versions:
+
+bindfs:		bindfs-1.8.4
+boost:		boost_1_42_0.tar.gz
+libtorrent:	libtorrent-rasterbar-0.14.9.tar.gz
+
+
+**** Instructions on how to use utilities in p2p subdirectory to
+
+A) Create a torrent file
+B) Run a p2p file server (a single p2p seed without a tracker) 
+C) Run a p2p client to test the p2p file server 
+
+How to Create a Torrent File
+============================
+p2pfs/p2p/make_torrent utility is designed to create a torrent file from 
+any other file. make_torrent is meant to be more flexible than make_16K_torrent.
+The three main differences between make_torrent and 
+the older make_16K_torrent utility is that make_torrent: 
+   -Allows to break the file into variable size chunks 
+   -Does not require a tracker url to be provided
+   -Takes arguments in variable order specified with flags. 
+
+
+To create a torrent file form a base file run: 
+$ ./make_torrent -t <torrent file> -f <base file> [-s <chunk size in KB, default = 16> ] [-r <tracker URL>] 
+
+The only required arguments are -t and -f.
+-r which specifies a URL for the tracker is not required 
+-s if omitted splits the file into 16KB chunks. 
+
+<base file> = file that you want to serve via BitTorrent
+<torrent file> = the .torrent file generated
+<tracker URL> = the URL of the tracker.
+<chunk size> = size of the chunks (e.g. 256 means 256 KB chunks, default is 16), the values must be 2^i with i>=4. 
+
+EXAMPLES: if you want to create a torrent file "foo.torrent" to
+serve a file called "my_vm" in 256 KB chunks, then run:  
+$ ./make_torrent -t foo.torrent -f my_vm -s 256 
+
+If you want to specify a tracker to run on the server hp05.ncl.cs.columbia.edu, port 9000, then run: 
+$ ./make_torrent -t foo.torrent -f my_vm -s 256 -r http://hp05.ncl.cs.columbia.edu:9000/announce
+
+If you omit -s, "-s 16" is assumed. 
+
+How to test with a Tracker-less Torrent
+=======================================
+Typically a BitTorrent system requires at least one tracker, and 
+one seed peer. A leecher joining the system will read the torrent
+file, find the location of the tracker, contact the tracker, get
+the location of other peers (in this case of the one seed), and 
+make requests to other peers. 
+
+To make things simpler, we will test with a tracker-less torrent. 
+In this case, no tracker is required, and the client can contact
+the server (or a seed peer) directly. 
+
+Setting up a seed
+-----------------
+To set up a seed to serve a file, run the following: 
+$ ./test_p2p -t <torrent file> -l <storage dir> 
+e.g. ~/p2pfs/p2p/test_p2p -t ubuntu.torrent -l .
+
+<torrent file> is the .torrent file created with make_torrent
+<storgage dir> is a directory containing the base file being served
+
+to rate limit use the optional -u and -d flags followed by the speed in kilobits
+
+Note: DO NOT RUN TWO SEEDS SIMULTANEOUSLY unless you manually specify differing ports.
+
+Setting up a test client
+------------------------
+To set up a client to get the file from the seed: first MAKE SURE TO RUN THE SEED, then run, IN A DIFFERENT DIRECTORY:
+$ ./test_p2p -t <torrent file> -d <storage dir> -s <seed hostname> 
+
+

@@ -1,0 +1,64 @@
+#!/bin/bash
+
+yesno()
+{
+    while [ /bin/true ]; do
+	echo -n "$1? (y/n) "
+	read ans
+	case "$ans" in
+	    y|Y|yes|YES|Yes) return 0 ;;
+	    n|N|no|NO|No) return 1 ;;
+	    *) ;;
+	esac
+    done
+}
+
+#
+# configure/build boost
+#
+do=y
+if [ -d boost/install ]; then
+    yesno "Rebuild 'boost' (this may be lenghty)" || do=n
+fi
+
+if [ $do = y ]; then
+    cd boost
+    mkdir -p install
+    ./bootstrap.sh \
+	--with-libraries="date_time,filesystem,program_options,regex,thread" \
+	--prefix=`pwd`/install
+    ./bjam install
+    cd ..
+fi
+
+#
+# configure libtorrent
+#
+do=y
+if [ -d libtorrent/Makefile ]; then
+    yesno "Reconfigure 'libtorrent' ?" || do=n
+fi
+
+if [ $do = y ]; then
+    cd libtorrent
+    ./configure --with-boost=`pwd`/../boost/install \
+	CXXFLAGS="-g -O2 -DTORRENT_STATS=1 -DTORRENT_DISK_STATS=1" \
+	CFLAGS="-g -O2 -DTORRENT_STATS=1 -DTORRENT_DISK_STATS=1"
+    cd ..
+fi
+
+#
+# configure bindfs
+#
+
+#
+# configure libtorrent
+#
+do=y
+if [ -d Makefile ]; then
+    yesno "Reconfigure 'p2pfs' ?" || do=n
+fi
+
+if [ $do = y ]; then
+    ./configure
+fi
