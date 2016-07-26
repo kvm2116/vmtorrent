@@ -1,0 +1,11 @@
+#THis is a sample peers file
+#the file should contain entries of hostnames and port numbers of the peers
+#to connect to. For now, the interface assumes that the remote peer is already
+#running, and tries to connect once on startup.
+#THe file should contain lines in the form of: 
+hp05.ncl.cs.columbia.edu:6990
+#OR:
+hp05.ncl.cs.columbia.edu
+#If no port is specified the default 6881 will be used
+
+
