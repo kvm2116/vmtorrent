@@ -11,9 +11,27 @@ $ export LD_LIBRARY_PATH="LD_LIBRARY_PATH:`pwd`/libtorrent/src/.libs:`pwd`/boost
 
 
 *** Instructions to compile:
-$ ./build-deps		<-- this takes a while
-$ make			<-- this is long on the time
 
+cd boost
+mkdir -p install
+./bootstrap.sh \
+--with-libraries="date_time,filesystem,program_options,regex,thread" \
+--prefix=`pwd`/install
+./bjam install
+cd ..
+cd libtorrent
+./configure --with-boost=`pwd`/../boost/install \
+CXXFLAGS="-g -O2 -DTORRENT_STATS=1 -DTORRENT_DISK_STATS=1" \
+CFLAGS="-g -O2 -DTORRENT_STATS=1 -DTORRENT_DISK_STATS=1"
+make
+cd ..
+./configure
+make
+
+( Currently the following is not supported:
+	$ ./build-deps		<-- this takes a while
+	$ make			<-- this is long on the time
+)
 
 *** Required packages
 
@@ -23,9 +41,9 @@ libssl-dev
 
 *** Versions:
 
-bindfs:		bindfs-1.8.4
-boost:		boost_1_42_0.tar.gz
-libtorrent:	libtorrent-rasterbar-0.14.9.tar.gz
+bindfs:		bindfs-1.13.1
+boost:		boost_1_61_0.tar.gz
+libtorrent:	libtorrent-rasterbar-1.0.5.tar.gz
 
 
 **** Instructions on how to use utilities in p2p subdirectory to
