@@ -1154,6 +1154,8 @@ namespace libtorrent
 		// is to a torrent that hasn't loaded yet (for instance by being added)
 		// by a URL, the returned value is undefined.
 		sha1_hash info_hash() const;
+		boost::weak_ptr<torrent> get_torrent() 
+        	{ return m_torrent; }
 
 		// comparison operators. The order of the torrents is unspecified
 		// but stable.

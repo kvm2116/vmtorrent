@@ -131,16 +131,16 @@ am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/compile_flags.in \
 	$(srcdir)/link_flags.in
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} /users/mkunal/libtorrent/build-aux/missing aclocal-1.15
+ACLOCAL = ${SHELL} /users/mkunal/vmtorrent/p2pfs/libtorrent/build-aux/missing aclocal-1.15
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 0
 AR = ar
-AUTOCONF = ${SHELL} /users/mkunal/libtorrent/build-aux/missing autoconf
-AUTOHEADER = ${SHELL} /users/mkunal/libtorrent/build-aux/missing autoheader
-AUTOMAKE = ${SHELL} /users/mkunal/libtorrent/build-aux/missing automake-1.15
+AUTOCONF = ${SHELL} /users/mkunal/vmtorrent/p2pfs/libtorrent/build-aux/missing autoconf
+AUTOHEADER = ${SHELL} /users/mkunal/vmtorrent/p2pfs/libtorrent/build-aux/missing autoheader
+AUTOMAKE = ${SHELL} /users/mkunal/vmtorrent/p2pfs/libtorrent/build-aux/missing automake-1.15
 AWK = mawk
-BOOST_CPPFLAGS = -I/users/mkunal/libtorrent/../boost/install/include
-BOOST_LDFLAGS = -L/users/mkunal/libtorrent/../boost/install/lib
+BOOST_CPPFLAGS = -I/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include
+BOOST_LDFLAGS = -L/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/lib
 BOOST_PYTHON_LIB = 
 BOOST_SYSTEM_LIB = -lboost_system
 CC = gcc
@@ -148,7 +148,7 @@ CCDEPMODE = depmode=gcc3
 CFLAGS = -pthread -g -O2 -DTORRENT_STATS=1 -DTORRENT_DISK_STATS=1 -fvisibility=hidden
 COMPILETIME_OPTIONS =  -DTORRENT_USE_OPENSSL  -DWITH_SHIPPED_GEOIP_H  -DBOOST_ASIO_HASH_MAP_BUCKETS=1021  -DBOOST_EXCEPTION_DISABLE  -DBOOST_ASIO_ENABLE_CANCELIO  -DBOOST_ASIO_DYN_LINK -DTORRENT_LINKING_SHARED 
 CPP = gcc -E
-CPPFLAGS = -I/users/mkunal/libtorrent/../boost/install/include 
+CPPFLAGS = -I/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include 
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
@@ -177,7 +177,7 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 INTERFACE_VERSION_INFO = 8:0:0
 LD = /usr/bin/ld -m elf_x86_64
-LDFLAGS = -L/users/mkunal/libtorrent/../boost/install/lib  -fvisibility=hidden -fvisibility-inlines-hidden
+LDFLAGS = -L/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/lib  -fvisibility=hidden -fvisibility-inlines-hidden
 LIBICONV = -liconv
 LIBOBJS = 
 LIBS = -lpthread  
@@ -187,7 +187,7 @@ LN_S = ln -s
 LTLIBICONV = -liconv
 LTLIBOBJS = 
 LT_SYS_LIBRARY_PATH = 
-MAKEINFO = ${SHELL} /users/mkunal/libtorrent/build-aux/missing makeinfo
+MAKEINFO = ${SHELL} /users/mkunal/vmtorrent/p2pfs/libtorrent/build-aux/missing makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /bin/mkdir -p
 NM = /usr/bin/nm -B
@@ -227,10 +227,10 @@ SET_MAKE =
 SHELL = /bin/bash
 STRIP = strip
 VERSION = 1.0.5
-abs_builddir = /users/mkunal/libtorrent/bindings/python
-abs_srcdir = /users/mkunal/libtorrent/bindings/python
-abs_top_builddir = /users/mkunal/libtorrent
-abs_top_srcdir = /users/mkunal/libtorrent
+abs_builddir = /users/mkunal/vmtorrent/p2pfs/libtorrent/bindings/python
+abs_srcdir = /users/mkunal/vmtorrent/p2pfs/libtorrent/bindings/python
+abs_top_builddir = /users/mkunal/vmtorrent/p2pfs/libtorrent
+abs_top_srcdir = /users/mkunal/vmtorrent/p2pfs/libtorrent
 ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_CXX = g++
@@ -261,7 +261,7 @@ host_vendor = unknown
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /users/mkunal/libtorrent/build-aux/install-sh
+install_sh = ${SHELL} /users/mkunal/vmtorrent/p2pfs/libtorrent/build-aux/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale

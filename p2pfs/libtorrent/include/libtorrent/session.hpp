@@ -208,7 +208,7 @@ namespace libtorrent
 		// destructing the session object. Because it can take a few second for
 		// it to finish. The timeout can be set with ``set_settings()``.
 		~session();
-
+		boost::shared_ptr<aux::session_impl> get_session_imp(){return m_impl;}
 		// TODO: 2 the ip filter should probably be saved here too
 
 		// flags that determines which aspects of the session should be
