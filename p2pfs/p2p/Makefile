@@ -50,12 +50,12 @@ CPPFLAGS +=  -pthread -I$(boost_install_dir)/include/boost -DTORRENT_STATS=1 -DT
 
 LIBTOOL = /bin/bash libtool
 CXXLD = $(CXX)
-AM_LDFLAGS = ${LDLAGS} -L./  -lboost_filesystem -lboost_thread  -DBOOST_MULTI_INDEX_DISABLE_SERIALIZATION -L/usr/lib -lssl -lcrypto
+AM_LDFLAGS = ${LDLAGS} -L./  -lboost_system -lboost_filesystem -lboost_thread  -DBOOST_MULTI_INDEX_DISABLE_SERIALIZATION -L/usr/lib -lssl -lcrypto
 LIBS = -lz -lrt
 
 client_test_SOURCES = client_test.cpp
-#client_test_LDADD = $(libtorrent_dir)/src/libtorrent-rasterbar.la -lboost_regex -lboost_program_options
-client_test_LDADD = -ltorrent-rasterbar -lboost_regex -lboost_program_options
+#client_test_LDADD = $(libtorrent_dir)/src/libtorrent-rasterbar.la -lboost_system -lboost_regex -lboost_program_options
+client_test_LDADD = -ltorrent-rasterbar -lboost_system -lboost_regex -lboost_program_options
 
 get_vm_LDADD = $(client_test_LDADD)
 
@@ -68,7 +68,7 @@ P2P_OBJ = p2p_interface.o p2p_wrapper.o
 P2P_DEP = p2p_interface.hpp vmtorrent_defines.hpp Makefile
 
 #all: test_blaster test_p2p make_torrent read_allblocks profile_reader
-all: test_p2p make_torrent 
+all: test_p2p make_torrent
 
 $(P2P_OBJ): $(P2P_DEP)
 
