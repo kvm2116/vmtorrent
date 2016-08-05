@@ -39,6 +39,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/bencode.hpp"
 #include "libtorrent/torrent_info.hpp"
 #include "libtorrent/file.hpp"
+#include "libtorrent/file_pool.hpp"
 #include "libtorrent/storage.hpp"
 #include "libtorrent/hasher.hpp"
 #include "libtorrent/create_torrent.hpp"
@@ -55,7 +56,7 @@ using namespace libtorrent;
 // name starts with a .
 bool file_filter(boost::filesystem::path const& filename)
 {
-	if (filename.leaf()[0] == '.') return false;
+	if (filename.string().at(0) == '.') return false;
 	std::cerr << filename << std::endl;
 	return true;
 }
@@ -139,7 +140,7 @@ int main(int argc, char* argv[])
 		    return 0;
 		} 
 
-		add_files(fs, full_path, file_filter);
+		add_files(fs, full_path.string(), file_filter);
 		if (fs.num_files() == 0)
 		{
 			std::cerr << "no files specified." << std::cerr;
@@ -153,7 +154,7 @@ int main(int argc, char* argv[])
 
 		t.set_priv(priv); // apply private setting
 
-		set_piece_hashes(t, full_path.branch_path()
+		set_piece_hashes(t, full_path.branch_path().string()
 			, boost::bind(&print_progress, _1, t.num_pieces()));
 		std::cerr << std::endl;
 		t.set_creator(creator_str);
