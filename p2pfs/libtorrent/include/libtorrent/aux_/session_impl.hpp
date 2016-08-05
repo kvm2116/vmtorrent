@@ -163,7 +163,7 @@ namespace libtorrent
 			boost::uint64_t pageouts;
 			boost::uint64_t faults;
 		};
-#endif
+#endif          
 
 		struct thread_cpu_usage
 		{

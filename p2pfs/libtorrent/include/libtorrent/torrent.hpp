@@ -139,6 +139,8 @@ namespace libtorrent
 		, public boost::enable_shared_from_this<torrent>
 	{
 	public:
+		void register_p2pinterface_callback(void *p,
+                            void (*callback)(void *, int));
 
 		torrent(aux::session_impl& ses, tcp::endpoint const& net_interface
 			, int block_size, int seq, add_torrent_params const& p

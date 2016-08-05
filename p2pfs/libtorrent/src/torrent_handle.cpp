@@ -272,6 +272,11 @@ namespace libtorrent
 		if (!t) return empty;
 		return t->info_hash();
 	}
+	void torrent_handle::register_p2pinterface_callback(void *p2pIface,
+                                                            void (*callback)(void *, int)) const
+        {
+                TORRENT_SYNC_CALL2(register_p2pinterface_callback, p2pIface, callback);
+        }
 
 	int torrent_handle::max_uploads() const
 	{

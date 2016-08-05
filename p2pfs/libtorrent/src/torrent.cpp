@@ -96,6 +96,10 @@ using libtorrent::aux::session_impl;
 
 namespace
 {
+
+	void *p2pif;
+    	void (*p2pifCallback)(void *, int);	
+
 	struct find_peer_by_ip
 	{
 		find_peer_by_ip(tcp::endpoint const& a, const torrent* t)
@@ -666,6 +670,18 @@ namespace libtorrent
 		++m_num_verified;
 		m_verified.set_bit(piece);
 	}
+
+	 // setup callback to be used for passing piece download notifications to p2p_interface
+    	void torrent::register_p2pinterface_callback(void *p2pIface,
+                             void (*callback)(void *p2pIface, int ind)) {
+        p2pif = p2pIface;
+        p2pifCallback = callback;
+#ifdef VMTORRENT_DBG
+        VMTORRENT_OUT << "p2pif=" << p2pif 
+                  << "p2pifCallback=" << p2pifCallback
+                  << std::endl;
+#endif
+    	}		
 
 	void torrent::start()
 	{
