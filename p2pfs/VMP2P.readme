@@ -11,6 +11,7 @@ $ export LD_LIBRARY_PATH="LD_LIBRARY_PATH:`pwd`/libtorrent/src/.libs:`pwd`/boost
 
 
 *** Instructions to compile:
+sudo apt-get install pkg-config libfuse2 libfuse-dev
 
 cd boost
 mkdir -p install
@@ -20,9 +21,12 @@ mkdir -p install
 ./bjam install
 cd ..
 cd libtorrent
-./configure --with-boost=`pwd`/../boost/install \
+./configure --enable-export-all=yes --with-boost=`pwd`/../boost/install \
 CXXFLAGS="-g -O2 -DTORRENT_STATS=1 -DTORRENT_DISK_STATS=1" \
 CFLAGS="-g -O2 -DTORRENT_STATS=1 -DTORRENT_DISK_STATS=1"
+make
+cd ..
+cd p2p
 make
 cd ..
 ./configure

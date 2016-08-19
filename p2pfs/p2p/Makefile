@@ -55,7 +55,7 @@ LIBS = -lz -lrt
 
 client_test_SOURCES = client_test.cpp
 #client_test_LDADD = $(libtorrent_dir)/src/libtorrent-rasterbar.la -lboost_system -lboost_regex -lboost_program_options
-client_test_LDADD = -ltorrent-rasterbar -lboost_system -lboost_regex -lboost_program_options
+client_test_LDADD = -ltorrent-rasterbar -lboost_system -lboost_filesystem -lboost_regex -lboost_program_options
 
 get_vm_LDADD = $(client_test_LDADD)
 
