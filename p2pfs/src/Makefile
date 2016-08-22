@@ -97,9 +97,9 @@ am_bindfs_OBJECTS = bindfs.$(OBJEXT) debug.$(OBJEXT) \
 	permchain.$(OBJEXT) userinfo.$(OBJEXT) misc.$(OBJEXT) \
 	usermap.$(OBJEXT) rate_limiter.$(OBJEXT) blocks.$(OBJEXT)
 bindfs_OBJECTS = $(am_bindfs_OBJECTS)
-am__DEPENDENCIES_1 = ../p2p/p2p_wrapper.o ../p2p/p2p_interface.o
-am__DEPENDENCIES_2 =
-bindfs_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2) \
+am__DEPENDENCIES_1 =
+am__DEPENDENCIES_2 = ../p2p/p2p_wrapper.o ../p2p/p2p_interface.o
+bindfs_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_2)
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
@@ -131,7 +131,7 @@ AM_V_CC = $(am__v_CC_$(V))
 am__v_CC_ = $(am__v_CC_$(AM_DEFAULT_VERBOSITY))
 am__v_CC_0 = @echo "  CC      " $@;
 am__v_CC_1 = 
-CCLD = $(CC)
+CCLD = g++
 LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
@@ -325,9 +325,9 @@ AM_CPPFLAGS = ${my_CPPFLAGS} ${fuse_CFLAGS}
 AM_CFLAGS = ${my_CFLAGS}
 p2p_LIBS = ../p2p/p2p_wrapper.o ../p2p/p2p_interface.o \
 		-L../boost/install/lib -L../libtorrent/src/.libs \
-		-ltorrent-rasterbar -lboost_system -lboost_regex -lboost_program_options -lz -lrt
+		-ltorrent-rasterbar -lboost_system -lboost_filesystem -lboost_regex -lboost_program_options -lz -lrt
 
-bindfs_LDADD = $(p2p_LIBS) $(fuse_LIBS) ${my_LDFLAGS}
+bindfs_LDADD = $(fuse_LIBS) ${my_LDFLAGS} $(p2p_LIBS)
 man_MANS = bindfs.1
 all: all-am
 
