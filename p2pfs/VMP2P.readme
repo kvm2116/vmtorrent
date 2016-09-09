@@ -37,6 +37,17 @@ make
 	$ make			<-- this is long on the time
 )
 
+*** Possible error fixes
+
+aclocal 1.15 missing:
+	run ./autogen.sh
+
+undefined reference to symbol '_ZN5boost6system15system_categoryEv':
+	need to add "-lboost_system" for p2p_LIBS in p2pfs/src/Makefile.am
+	
+undefined reference to symbol '_ZSt28_Rb_tree_rebalance_for_erasePSt18_Rb_tree_node_baseRS_@@GLIBCXX_3.4':
+	need to change the value of CCLD to "g++"
+
 *** Required packages
 
 libtool
