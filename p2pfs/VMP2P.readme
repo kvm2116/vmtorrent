@@ -40,6 +40,10 @@ make
 *** Possible error fixes
 
 aclocal 1.15 missing:
+
+	Try doing "touch *" in the directory as well as the in the src directory
+	
+	If the above doesn't work, try:
 	run ./autogen.sh
 
 undefined reference to symbol '_ZN5boost6system15system_categoryEv':
