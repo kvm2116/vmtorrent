@@ -41,6 +41,8 @@ make
 
 aclocal 1.15 missing:
 
+	Try "make clean"
+	
 	Try doing "touch *" in the directory as well as the in the src directory
 	
 	If the above doesn't work, try:
