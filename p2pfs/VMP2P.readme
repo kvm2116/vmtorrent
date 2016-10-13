@@ -11,6 +11,7 @@ $ export LD_LIBRARY_PATH="LD_LIBRARY_PATH:`pwd`/libtorrent/src/.libs:`pwd`/boost
 
 
 *** Instructions to compile:
+sudo apt-get update
 sudo apt-get install pkg-config libfuse2 libfuse-dev
 
 cd boost
@@ -40,7 +41,7 @@ make
 *** Possible error fixes
 
 aclocal 1.15 missing:
-
+	
 	Try "make clean"
 	
 	Try doing "touch *" in the directory as well as the in the src directory
