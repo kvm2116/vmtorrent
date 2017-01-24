@@ -145,3 +145,21 @@ To set up a client to get the file from the seed: first MAKE SURE TO RUN THE SEE
 $ ./test_p2p -t <torrent file> -l <storage dir> -s <seed hostname> 
 e.g. ./test_p2p -t foo.torrent -l . -s 128.104.222.86
 
+Downloading files from src to dest
+-----------------------
+Currently, there are two files we're testing with on src:
+test_base.o with the torrent file foo.torrent
+hello_text.txt with the torrent file foo2.torrent
+
+To torrent test_base.o, first run the seeder on src:
+bwang@src:~/vmtorrent/p2pfs/p2p$ ./test_p2p -t foo.torrent -l .
+Next run a test client on dest:
+bwang@dest:~/vmtorrent/p2pfs/p2p$ ./test_p2p -t foo.torrent -l . -s
+128.104.222.86
+
+To torrent hello_text.txt, first run the seeder on src:
+bwang@src:~/vmtorrent/p2pfs/p2p$ ./test_p2p -t foo.torrent -l .
+Next run a test client on dest:
+bwang@dest:~/vmtorrent/p2pfs/p2p$ ./test_p2p -t foo.torrent -l . -s
+128.104.222.86
+
