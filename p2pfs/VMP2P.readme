@@ -3,7 +3,7 @@
 
 (from the p2pfs top level directory)
 
-if LD_LIBRARY_PATH is empty, then
+if D_LIBRARY_PATH is empty, then
 $ export LD_LIBRARY_PATH="`pwd`/libtorrent/src/.libs:`pwd`/boost/install/lib"
 
 else if LD_LIBRARY_PATH is non-empty, then:
@@ -49,11 +49,19 @@ aclocal 1.15 missing:
 	If the above doesn't work, try:
 	run ./autogen.sh
 
+	If the above also doesn't work, try:
+	run autoreconf -f -i
+
 undefined reference to symbol '_ZN5boost6system15system_categoryEv':
 	need to add "-lboost_system" for p2p_LIBS in p2pfs/src/Makefile.am
 	
 undefined reference to symbol '_ZSt28_Rb_tree_rebalance_for_erasePSt18_Rb_tree_node_baseRS_@@GLIBCXX_3.4':
 	need to change the value of CCLD to "g++" in p2pfs/src/Makefile.in
+
+$~/vmtorrent/p2pfs/p2p$ ./test_p2p
+./test_p2p: error while loading shared libraries: libtorrent-rasterbar.so.8: cannot open shared object file: No such file or directory
+	remember to run export LD_LIBRARY_PATH="`pwd`/libtorrent/src/.libs:`pwd`/boost/install/lib" in the correct folder
+ 
 
 *** Required packages
 
@@ -134,6 +142,6 @@ Note: DO NOT RUN TWO SEEDS SIMULTANEOUSLY unless you manually specify differing 
 Setting up a test client
 ------------------------
 To set up a client to get the file from the seed: first MAKE SURE TO RUN THE SEED, then run, IN A DIFFERENT DIRECTORY:
-$ ./test_p2p -t <torrent file> -d <storage dir> -s <seed hostname> 
-
+$ ./test_p2p -t <torrent file> -l <storage dir> -s <seed hostname> 
+e.g. ./test_p2p -t foo.torrent -l . -s 128.104.222.86
 
