@@ -203,4 +203,23 @@ Make 2 directories: bfs_1 and bfs_2
 bindfs bfs_1 bfs_2
 --bfs_2 will mirror bfs_1
 
+To install vncserver:
+sudo apt-get update
+sudo apt-get install xfce4 xfce4-goodies tightvncserver
+
+To run a vncserver instance:
+vncserver
+
+To kill a vncserver instance:
+vncserver -kill :instance_no
+
+Next, install a vnc_viewer on your computer
+Connect to the new X desktop,for instance, dest.ecmptestbed.flowscheduler-pg0.wisc.cloudlab.us:1 as seen below:
+
+bwang@dest:~$ vncserver
+
+New 'X' desktop is dest.ecmptestbed.flowscheduler-pg0.wisc.cloudlab.us:1
+
+Starting applications specified in /home/bwang/.vnc/xstartup
+Log file is /home/bwang/.vnc/dest.ecmptestbed.flowscheduler-pg0.wisc.cloudlab.us:1.log
 
