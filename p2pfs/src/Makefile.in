@@ -131,7 +131,7 @@ AM_V_CC = $(am__v_CC_@AM_V@)
 am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
 am__v_CC_0 = @echo "  CC      " $@;
 am__v_CC_1 = 
-CCLD = $(CC)
+CCLD = "g++"
 LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
@@ -325,7 +325,7 @@ AM_CPPFLAGS = ${my_CPPFLAGS} ${fuse_CFLAGS}
 AM_CFLAGS = ${my_CFLAGS}
 p2p_LIBS = ../p2p/p2p_wrapper.o ../p2p/p2p_interface.o \
 		-L../boost/install/lib -L../libtorrent/src/.libs \
-		-ltorrent-rasterbar -lboost_regex -lboost_program_options -lz -lrt
+		-ltorrent-rasterbar -lboost_system -lboost_regex -lboost_program_options -lz -lrt
 
 bindfs_LDADD = $(p2p_LIBS) $(fuse_LIBS) ${my_LDFLAGS}
 man_MANS = bindfs.1

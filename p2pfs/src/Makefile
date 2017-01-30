@@ -97,9 +97,9 @@ am_bindfs_OBJECTS = bindfs.$(OBJEXT) debug.$(OBJEXT) \
 	permchain.$(OBJEXT) userinfo.$(OBJEXT) misc.$(OBJEXT) \
 	usermap.$(OBJEXT) rate_limiter.$(OBJEXT) blocks.$(OBJEXT)
 bindfs_OBJECTS = $(am_bindfs_OBJECTS)
-am__DEPENDENCIES_1 =
-am__DEPENDENCIES_2 = ../p2p/p2p_wrapper.o ../p2p/p2p_interface.o
-bindfs_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+am__DEPENDENCIES_1 = ../p2p/p2p_wrapper.o ../p2p/p2p_interface.o
+am__DEPENDENCIES_2 =
+bindfs_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_2) \
 	$(am__DEPENDENCIES_2)
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
@@ -131,7 +131,7 @@ AM_V_CC = $(am__v_CC_$(V))
 am__v_CC_ = $(am__v_CC_$(AM_DEFAULT_VERBOSITY))
 am__v_CC_0 = @echo "  CC      " $@;
 am__v_CC_1 = 
-CCLD = g++
+CCLD = "g++"
 LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
@@ -197,13 +197,13 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} /users/mkunal/vmtorrent/p2pfs/missing aclocal-1.14
+ACLOCAL = ${SHELL} /home/bwang/vmtorrent/p2pfs/missing aclocal-1.14
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
 AR = ar
-AUTOCONF = ${SHELL} /users/mkunal/vmtorrent/p2pfs/missing autoconf
-AUTOHEADER = ${SHELL} /users/mkunal/vmtorrent/p2pfs/missing autoheader
-AUTOMAKE = ${SHELL} /users/mkunal/vmtorrent/p2pfs/missing automake-1.14
+AUTOCONF = ${SHELL} /home/bwang/vmtorrent/p2pfs/missing autoconf
+AUTOHEADER = ${SHELL} /home/bwang/vmtorrent/p2pfs/missing autoheader
+AUTOMAKE = ${SHELL} /home/bwang/vmtorrent/p2pfs/missing automake-1.14
 AWK = mawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -236,7 +236,7 @@ LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIPO = 
 LN_S = ln -s
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /users/mkunal/vmtorrent/p2pfs/missing makeinfo
+MAKEINFO = ${SHELL} /home/bwang/vmtorrent/p2pfs/missing makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /bin/mkdir -p
 NM = /usr/bin/nm -B
@@ -262,10 +262,10 @@ SET_MAKE =
 SHELL = /bin/bash
 STRIP = strip
 VERSION = 1.13.1
-abs_builddir = /users/mkunal/vmtorrent/p2pfs/src
-abs_srcdir = /users/mkunal/vmtorrent/p2pfs/src
-abs_top_builddir = /users/mkunal/vmtorrent/p2pfs
-abs_top_srcdir = /users/mkunal/vmtorrent/p2pfs
+abs_builddir = /home/bwang/vmtorrent/p2pfs/src
+abs_srcdir = /home/bwang/vmtorrent/p2pfs/src
+abs_top_builddir = /home/bwang/vmtorrent/p2pfs
+abs_top_srcdir = /home/bwang/vmtorrent/p2pfs
 ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_DUMPBIN = 
@@ -296,7 +296,7 @@ host_vendor = unknown
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /users/mkunal/vmtorrent/p2pfs/install-sh
+install_sh = ${SHELL} /home/bwang/vmtorrent/p2pfs/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -325,9 +325,9 @@ AM_CPPFLAGS = ${my_CPPFLAGS} ${fuse_CFLAGS}
 AM_CFLAGS = ${my_CFLAGS}
 p2p_LIBS = ../p2p/p2p_wrapper.o ../p2p/p2p_interface.o \
 		-L../boost/install/lib -L../libtorrent/src/.libs \
-		-ltorrent-rasterbar -lboost_system -lboost_filesystem -lboost_regex -lboost_program_options -lz -lrt
+		-ltorrent-rasterbar -lboost_system -lboost_regex -lboost_program_options -lz -lrt
 
-bindfs_LDADD = $(fuse_LIBS) ${my_LDFLAGS} $(p2p_LIBS)
+bindfs_LDADD = $(p2p_LIBS) $(fuse_LIBS) ${my_LDFLAGS}
 man_MANS = bindfs.1
 all: all-am
 

@@ -12,7 +12,7 @@ export LD_LIBRARY_PATH += $(CURDIR)/../libtorrent/src/.libs:$(CURDIR)/../boost/i
 
 p2p_LIBS = ../p2p/p2p_wrapper.o ../p2p/p2p_interface.o \
 		-L../boost/install/lib -L../libtorrent/src/.libs \
-		-ltorrent-rasterbar -lboost_regex -lboost_program_options -lz -lrt
+		-ltorrent-rasterbar -lboost_system -lboost_regex -lboost_program_options -lz -lrt
 
 bindfs_LDADD = $(p2p_LIBS) $(fuse_LIBS) ${my_LDFLAGS}
 

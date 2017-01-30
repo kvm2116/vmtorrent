@@ -81,7 +81,7 @@ subdir = .
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/configure $(am__configure_deps) \
 	$(srcdir)/config.h.in COPYING ChangeLog TODO compile \
-	config.guess config.sub install-sh missing ltmain.sh
+	config.guess config.sub depcomp install-sh missing ltmain.sh
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -191,13 +191,13 @@ distuninstallcheck_listfiles = find . -type f -print
 am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
   | sed 's|^\./|$(prefix)/|' | grep -v '$(infodir)/dir$$'
 distcleancheck_listfiles = find . -type f -print
-ACLOCAL = ${SHELL} /users/mkunal/bindfs/missing aclocal-1.14
+ACLOCAL = ${SHELL} /home/bwang/vmtorrent/p2pfs/missing aclocal-1.14
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
 AR = ar
-AUTOCONF = ${SHELL} /users/mkunal/bindfs/missing autoconf
-AUTOHEADER = ${SHELL} /users/mkunal/bindfs/missing autoheader
-AUTOMAKE = ${SHELL} /users/mkunal/bindfs/missing automake-1.14
+AUTOCONF = ${SHELL} /home/bwang/vmtorrent/p2pfs/missing autoconf
+AUTOHEADER = ${SHELL} /home/bwang/vmtorrent/p2pfs/missing autoheader
+AUTOMAKE = ${SHELL} /home/bwang/vmtorrent/p2pfs/missing automake-1.14
 AWK = mawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -230,7 +230,7 @@ LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIPO = 
 LN_S = ln -s
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /users/mkunal/bindfs/missing makeinfo
+MAKEINFO = ${SHELL} /home/bwang/vmtorrent/p2pfs/missing makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /bin/mkdir -p
 NM = /usr/bin/nm -B
@@ -256,10 +256,10 @@ SET_MAKE =
 SHELL = /bin/bash
 STRIP = strip
 VERSION = 1.13.1
-abs_builddir = /users/mkunal/bindfs
-abs_srcdir = /users/mkunal/bindfs
-abs_top_builddir = /users/mkunal/bindfs
-abs_top_srcdir = /users/mkunal/bindfs
+abs_builddir = /home/bwang/vmtorrent/p2pfs
+abs_srcdir = /home/bwang/vmtorrent/p2pfs
+abs_top_builddir = /home/bwang/vmtorrent/p2pfs
+abs_top_srcdir = /home/bwang/vmtorrent/p2pfs
 ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_DUMPBIN = 
@@ -290,7 +290,7 @@ host_vendor = unknown
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /users/mkunal/bindfs/install-sh
+install_sh = ${SHELL} /home/bwang/vmtorrent/p2pfs/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale

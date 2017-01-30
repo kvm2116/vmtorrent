@@ -1,1 +1,1 @@
--L../../src/.libs -L/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/lib -L/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/lib  -fvisibility=hidden -fvisibility-inlines-hidden
+-L../../src/.libs -L/home/bwang/vmtorrent/p2pfs/libtorrent/../boost/install/lib -L/home/bwang/vmtorrent/p2pfs/libtorrent/../boost/install/lib 

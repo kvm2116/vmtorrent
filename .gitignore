@@ -4,3 +4,6 @@
 *.a
 *.lo
 *.report
+*.tar.gz
+*.tgz
+._*
