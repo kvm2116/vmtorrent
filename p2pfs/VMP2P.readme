@@ -32,6 +32,7 @@ make
 cd ..
 ./configure
 make
+sudo make install 
 
 ( Currently the following is not supported:
 	$ ./build-deps		<-- this takes a while
@@ -194,5 +195,12 @@ Follow these instructions: https://docs.docker.com/engine/installation/linux/ubu
 If sudo: add-apt-repository: command not found:
 Follow these instructions: http://www.techtransit.org/solved-add-apt-repository-command-not-found-on-ubuntu-server/
 
+BINDFS:
+chmod 666 /etc/fuse.conf
+In /etc/fuse.conf: uncommmenting user_allow_access
+
+Make 2 directories: bfs_1 and bfs_2
+sudo bindfs bfs_1 bfs_2
+bfs_2 will mirror bfs_1
 
 
