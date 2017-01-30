@@ -200,7 +200,7 @@ chmod 666 /etc/fuse.conf
 In /etc/fuse.conf: uncommmenting user_allow_access
 
 Make 2 directories: bfs_1 and bfs_2
-sudo bindfs bfs_1 bfs_2
-bfs_2 will mirror bfs_1
+bindfs bfs_1 bfs_2
+--bfs_2 will mirror bfs_1
 
 
