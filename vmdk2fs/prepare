@@ -1,0 +1,22 @@
+#!/bin/bash
+if [ -z "$1" ]; then 
+    echo "usage: $0 <vmdk file>"
+    exit
+fi
+
+tempdir="mountpoint"
+files="filelist"
+dbfile="files.db"
+
+if [ ! -d $tempdir ]
+then
+    mkdir $tempdir
+fi
+
+#mount the disk
+sudo vmware-mount $1 $tempdir
+sudo find $tempdir/ -xdev >$files
+#load the files
+sudo ./c2db $files $dbfile
+sudo vmware-mount -d $tempdir
+rmdir $tempdir

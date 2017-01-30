@@ -1,0 +1,6 @@
+These files are used for retrieving data from VMDK file
+
+Requirements:
+	libsqlite3 - sudo apt-get install libsqlite3-dev
+	vmware-vddk - http://www.vmware.com/support/developer/vddk/
+	
