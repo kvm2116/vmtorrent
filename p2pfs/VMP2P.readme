@@ -154,13 +154,13 @@ hello_text.txt with the torrent file foo2.torrent
 In ~:
 Docker image tar file hello.tar with torrent file foo3.torrent
 
-To torrent test_base.o, first run the seeder on src:
+To torrent test_base.o, first run the seed on src:
 bwang@src:~/vmtorrent/p2pfs/p2p$ ./test_p2p -t foo.torrent -l .
 Next run a test client on dest:
 bwang@dest:~/vmtorrent/p2pfs/p2p$ ./test_p2p -t foo.torrent -l . -s
 128.104.222.86
 
-To torrent hello_text.txt, first run the seeder on src:
+To torrent hello_text.txt, first run the seed on src:
 bwang@src:~/vmtorrent/p2pfs/p2p$ ./test_p2p -t foo2.torrent -l .
 Next run a test client on dest:
 bwang@dest:~/vmtorrent/p2pfs/p2p$ ./test_p2p -t foo2.torrent -l . -s
@@ -168,7 +168,7 @@ bwang@dest:~/vmtorrent/p2pfs/p2p$ ./test_p2p -t foo2.torrent -l . -s
 
 To save a docker image as a tar file:
 sudo docker save hello-world > hello.tar
-To torrent hello.tar, first run the seeder on src:
+To torrent hello.tar, first run the seed on src:
 bwang@src:~$ ./vmtorrent/p2pfs/p2p/test_p2p -t foo3.torrent -l .
 Next run a test client on dest:
 bwang@dest:~$ ./vmtorrent/p2pfs/p2p/test_p2p -t foo3.torrent -l . -s 128.104.222.86
@@ -176,4 +176,23 @@ We can then test the docker image by loading it from the tar file:
 bwang@dest:~$ sudo docker load -i hello.tar
 And running it:
 bwang@dest:~$ sudo docker run hello-world
+
+Note: before trying to download a file using test_p2p, you need to scp the .torrent
+file for the file that you want to download first. 
+
+To parse the session statistics:
+1) make sure you have gnuplot installed:
+sudo apt-get install gnuplot
+2) next run:
+bwang@dest:~/session_stats$ python ../vmtorrent/p2pfs/libtorrent/tools/parse_session_stats.py 9691.0000.log 
+
+To install VMWARE workstation:
+https://www.hackerway.ch/2015/09/09/how-to-install-vmware-workstation-12-on-ubuntu-14-04-lts/
+
+To install Docker:
+Follow these instructions: https://docs.docker.com/engine/installation/linux/ubuntu/
+If sudo: add-apt-repository: command not found:
+Follow these instructions: http://www.techtransit.org/solved-add-apt-repository-command-not-found-on-ubuntu-server/
+
+
 
