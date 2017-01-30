@@ -1,0 +1,36 @@
+set ns [new Simulator]
+source tb_compat.tcl
+
+# PARAMS
+set numservers n_servers	    
+set numnodes n_nodes	    
+set lanstr ""    
+set IMAGE i_type
+set MACHINE_TYPE m_type
+
+#SERVERS
+for {set i 1} {$i <= $numservers} {incr i} {
+    set s($i) [$ns node]
+    tb-set-node-os $s($i) $IMAGE
+    tb-set-hardware $s($i) $MACHINE_TYPE 
+    tb-set-node-startcmd $s($i) "/proj/VMTorrent/startup --server >& /tmp/startup.log"	
+    append lanstr "$s($i) "  	          
+}
+
+# PEERS
+for {set i 1} {$i <= $numnodes} {incr i} {
+    set n($i) [$ns node]
+    tb-set-node-os $n($i) $IMAGE
+    tb-set-hardware $n($i) $MACHINE_TYPE 
+    tb-set-node-startcmd $n($i) "/proj/VMTorrent/startup >& /tmp/startup.log"	
+    append lanstr "$n($i) "  	          
+}
+  		  
+# Lans
+# Put all the nodes in a lan  		 
+if {$numservers + $numnodes > 1} {
+   set lan0 [$ns make-lan "$lanstr" 100Mb 0ms]
+}
+$ns rtproto Static
+$ns run
+

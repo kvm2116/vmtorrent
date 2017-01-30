@@ -1,0 +1,194 @@
+#!/bin/bash
+
+usage()
+{
+    echo "usage: this -i -r -s STG -g GRACE -f SSHFS_REPEAT -p PROFILE_SIZE -d DIV -b BTW #nodes #repeat [TYPES]"
+    exit 1
+}
+
+DISK_FLAG=""
+GRACE=7200
+STG=0
+SSHFS_REPEAT=1
+PSIZE=1000
+DIV=300
+BTW=160
+INITIAL=1
+while getopts "irg:s:f:p:d:b:h" opt; do
+    case $opt in
+	r) 
+	    echo "use RAM disk"
+	    DISK_FLAG="-r"
+	    ;;
+	i) 
+	    echo "initial run"
+	    INITIAL=0
+	    ;;
+	s) 
+	    STG=$OPTARG
+	    ;;
+	g) 
+	    GRACE=$OPTARG
+	    ;;
+	f) 
+	    SSHFS_REPEAT=$OPTARG
+	    ;;
+	p) 
+	    PSIZE=$OPTARG
+	    ;;
+	d) 
+	    DIV=$OPTARG
+	    ;;
+	b) 
+	    BTW=$OPTARG
+	    ;;
+	h | \?)
+	    usage
+	    ;;
+  esac
+done
+
+shift $[$OPTIND-1]
+
+if [ $# -lt 2 ]; then
+    usage
+    exit 1
+fi
+
+n=$1; shift
+REPEAT=$1; shift
+
+
+echo "N=$n"
+echo "REPEAT=$REPEAT"
+echo "STAGGER = $STG"
+echo "GRACE = $GRACE"
+echo "SSHFS_REPEAT = $SSHFS_REPEAT"
+echo "PROFILE_SIZE = $PSIZE"
+echo "DIV = $DIV"
+echo "BTW = $BTW"
+
+if [ $# -gt 0 ]; then
+    TYPES=$@
+else
+    TYPES="bindfs profile sshfs demand"  
+fi
+echo "TYPES = $TYPES"
+
+trial() {
+    
+    TYPE_STRING="typ_"
+    for t in $TYPES; do
+	TYPE_STRING="${TYPE_STRING}$t-"
+    done
+    TYPE_STRING=${TYPE_STRING%-}
+
+    TRIAL_NAME="s1-n$n.vm_$VM.tsk_${SCRIPT%.*}.grc_$GRACE.stg_$STG.div_$DIV.btw_$BTW.p_$PSIZE.$TYPE_STRING"
+    if [ "$DISK_FLAG" == "" ]; then
+	TRIAL_NAME=$TRIAL_NAME.dsk_local
+    else
+	TRIAL_NAME=$TRIAL_NAME.dsk_ram
+    fi
+    echo "RUNNING $TRIAL_NAME"
+
+    echo "config_trials $DISK_FLAG -g $GRACE -v $VM -k $SCRIPT -d $DIV -w $BTW -p $VM.${SCRIPT%.*}.$PSIZE.profile s1-n$n $REPEAT $STG ${TYPES/sshfs} "
+    config_trials $DISK_FLAG -g $GRACE -v $VM -k $SCRIPT -d $DIV -w $BTW -p $VM.${SCRIPT%.*}.$PSIZE.profile s1-n$n $REPEAT $STG ${TYPES/sshfs}
+
+    echo "exec_trials ../../config/experiment/s1-n$n.cfg"
+    exec_trials ../../config/experiment/s1-n$n.cfg
+
+    if [[ "$TYPES" == *sshfs* ]] ; then 
+
+	echo "config_trials $DISK_FLAG -g $GRACE -v $VM -k $SCRIPT -d $DIV -w $BTW -p $VM.${SCRIPT%.*}.$PSIZE.profile s1-n$n $SSHFS_REPEAT $STG sshfs "
+	config_trials $DISK_FLAG -g $GRACE -v $VM -k $SCRIPT -d $DIV -w $BTW -p $VM.${SCRIPT%.*}.$PSIZE.profile s1-n$n $SSHFS_REPEAT $STG sshfs
+    
+	echo "exec_trials ../../config/experiment/s1-n$n.cfg"
+	exec_trials ../../config/experiment/s1-n$n.cfg
+    fi
+
+    pushd ~/VMTorrent/experiments
+
+    echo "mv s1-n$n $TRIAL_NAME"
+    mv s1-n$n $TRIAL_NAME
+
+    for i in `find $TRIAL_NAME -name vm_runtime`; do echo $i | awk -F '/' '{ORS=""; print $5"\t"$3"\t\t"$4"\t"}' ;  cat $i;  done | sort -n -k 3 | sort -k 2 > $TRIAL_NAME.dat
+    
+    echo "parse_trials.py $TRIAL_NAME/$VM/exec_trials.log $n > $TRIAL_NAME.summary"
+    parse_trials.py $TRIAL_NAME.dat $n > $TRIAL_NAME.summary 
+        
+    echo "tar -cvzf $TRIAL_NAME.tgz $TRIAL_NAME"
+    tar -cvzf $TRIAL_NAME.tgz $TRIAL_NAME
+    
+    echo "rm -rf $TRIAL_NAME"
+    rm -rf $TRIAL_NAME
+    
+    popd
+}
+
+
+## MAKE SURE ALL SCRIPTS ARE UP-TO-DATE
+setup_trials -s ../../config/experiment/s1-n$n.cfg
+
+#### FEDORA
+if [ "$DISK_FLAG" == "-r" -a "$INITIAL" -eq 1 ]; then
+    echo "cleanup_trial -r ../../config/experiment/s1-n$n.cfg demand"
+    cleanup_trial -r ../../config/experiment/s1-n$n.cfg demand
+fi
+
+VM=fedora2
+echo "STARTING $VM EXPERIMENTS"
+
+SCRIPT=noop.sh
+trial
+
+SCRIPT=latex.sh
+trial
+
+#### UBUNTU
+if [ "$DISK_FLAG" == "-r" ]; then
+    echo "cleanup_trial -r ../../config/experiment/s1-n$n.cfg demand"
+    cleanup_trial -r ../../config/experiment/s1-n$n.cfg demand
+fi
+
+VM=ubuntu2
+echo "STARTING $VM EXPERIMENTS"
+
+SCRIPT=noop.sh
+trial
+
+SCRIPT=latex.sh
+trial
+
+SCRIPT=docEdit.sh
+trial
+
+
+#### WIN7
+
+TYPES=${TYPES/sshfs}
+if [ "$n" -gt 8 ]; then
+    TYPES=${TYPES/demand}
+fi
+
+if [ "$TYPES" == "" ]; then
+    exit 0
+fi
+
+if [ "$DISK_FLAG" == "-r" ]; then
+    echo "cleanup_trial -r ../../config/experiment/s1-n$n.cfg demand"
+    cleanup_trial -r ../../config/experiment/s1-n$n.cfg demand
+fi
+
+VM=win7
+echo "STARTING $VM EXPERIMENTS"
+
+SCRIPT=powerPoint.exe
+trial
+
+SCRIPT=music.exe
+trial
+
+SCRIPT=noop.exe
+trial
+
+

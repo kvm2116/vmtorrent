@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# TODO: ADD OPTION TO SPECIFY CONFIG FILE INSTEAD
+if [ $# -ne 1 ] ; then
+    echo "usage: start_server CONFIG_FILE"
+fi
+
+. ~/.profile
+CONFIG_FILE="$1"
+VERB_LEVEL="-v"
+if [ -f $CONFIG_FILE ]; then
+    source $CONFIG_FILE
+else
+    echo "NO CONFIG FILE FOUND AT $CONFIG_FILE"
+    exit 0
+fi
+
+killall -9 test_p2p tail
+mkdir -p $HOST_GUEST_DIR/newest
+cd $HOST_GUEST_DIR/newest
+(test_p2p -t $HOST_SRC_DIR/$VMDISK/$VMDISK.torrent -l $HOST_SRC_DIR/$VMDISK &> libtorrent.log &); 
+STATUS=`grep "TORRENT STARTED" libtorrent.log | wc -l`
+while [ "$STATUS" -eq 0 ]; do
+    STATUS=`grep "TORRENT STARTED" libtorrent.log | wc -l`
+    sleep 1
+done

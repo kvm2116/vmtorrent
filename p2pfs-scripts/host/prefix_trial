@@ -1,0 +1,99 @@
+millis_to_sleep=20
+START_T=`date +%s.%N`
+LAST_T=$START_T
+echo `printf "%0.6f:--------:--------:prefix_trial loading" $START_T`
+
+time_elapsed()
+{
+    CUR_T=`date +%s.%N`
+    TOTAL_ELAPSED=`echo "$CUR_T - $START_T" | bc` 
+    echo -n `printf "%0.6f:%0.6f:--------:" $CUR_T $TOTAL_ELAPSED`
+}
+
+time_elapsed_diff()
+{
+    CUR_T=`date +%s.%N`
+    TOTAL_ELAPSED=`echo "$CUR_T - $START_T" | bc` 
+    LAST_ELAPSED=`echo "$CUR_T - $LAST_T" | bc` 
+    LAST_T=$CUR_T
+    echo -n `printf "%0.6f:%0.6f:%0.6f:" $CUR_T $TOTAL_ELAPSED $LAST_ELAPSED`
+}
+
+cur_time()
+{
+    CUR_T=`date +%s.%N`
+    echo -n `printf "%0.6f:--------:--------: " $CUR_T`
+}
+
+save_logs()
+{
+    cur_time; echo -e "$ID:${SCRIPT_NAME}: save_logs ";
+    cur_time; echo -en "$ID:${SCRIPT_NAME}: pushd ";
+    pushd $HOST_EXEC_DIR
+    if [ -f vm_runtime ]; then
+	cur_time; echo -e "$ID:${SCRIPT_NAME}: save vm_runtime";
+	prsync $VERB_LEVEL vm_runtime $HOST_RESULTS_DIR/$IDC/
+    else
+	cur_time; echo -e "$ID:${SCRIPT_NAME}: vm_runtime not found";
+    fi
+
+    rm -f buffer_stats.log disk_buffers.log disk_io_thread.log	
+    NUM_LOGS=`ls *.log | wc -w`
+    NUM_TABS=`ls *.tab | wc -w`	
+    if [ "$NUM_LOGS" -gt 0 ] ; then
+       if [ "$NUM_TABS" -eq 0 ] ; then  
+       	   cur_time; echo -e "$ID:${SCRIPT_NAME}: parsing logs";		
+    	   parse_vmtorrent_logs.py		
+	   NUM_TABS=`ls *.tab | wc -w`
+	   if [ "$NUM_TABS" -gt 0 ]; then
+	    	prsync -z $VERB_LEVEL *.tab $HOST_RESULTS_DIR/$IDC/
+	   fi
+	fi	   
+	cur_time; echo -e "$ID:${SCRIPT_NAME}: saving log files";
+	prsync -z $VERB_LEVEL *.log $HOST_RESULTS_DIR/$IDC/
+    else
+	cur_time; echo -e "$ID:${SCRIPT_NAME}: no log files found";
+    fi
+    cur_time; echo -e "$ID:${SCRIPT_NAME}: done saving";
+    cur_time; echo -en "$ID:${SCRIPT_NAME}: popd ";
+    popd;
+}
+
+finish_up()
+{
+    save_logs
+#    echo "prsync /tmp/`hostname` $REPO/experiments/STATUS_TRIAL_DONE/"
+    cur_time; echo -e "$ID:${SCRIPT_NAME}: finish_up()";	
+    prsync $VERB_LEVEL /tmp/`hostname` $REPO/experiments/STATUS_TRIAL_DONE/
+    time_elapsed; echo -e "$ID:${SCRIPT_NAME}: registered done w/ controler";
+    time_elapsed; echo -e "$ID:${SCRIPT_NAME}: sleep $GRACE, then kill bindfs";
+    sleep $GRACE
+    ps auxw | grep bindfs | awk '{print $2}' | xargs kill -9
+    time_elapsed; echo -e "$ID:${SCRIPT_NAME}: bindfs killed";
+    ps auxw | grep bindfs
+}
+
+test_disk()
+{
+    REPS=1; 
+    pushd $HOST_EXEC_DIR
+    F_SIZE=262144 
+    B_SIZE=16384 
+    I=`seq 1 $REPS`
+    rm disk_io.log
+    for i in $I; do 
+	(/usr/bin/time -f "%P" iozone -i 0 -s $F_SIZE -r $B_SIZE > /dev/null) 2>> disk_io.log ; 
+    done
+    med_cutoff 5 disk_io.log
+    RET=$?
+    popd
+    if [ $RET -ne 0 ]; then
+	echo "$ID:${SCRIPT_NAME}: DISK IO SLOW"
+	return 1
+    else
+	echo "$ID:${SCRIPT_NAME}: DISK IO FINE"
+	return 0
+    fi
+}
+
+echo `printf "%0.6f:--------:--------:prefix_trial finished" $START_T`

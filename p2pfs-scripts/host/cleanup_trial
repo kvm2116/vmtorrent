@@ -1,0 +1,159 @@
+#!/bin/bash
+SCRIPT_NAME=cleanup_trial
+source prefix_trial
+
+while getopts "fhr" opt; do
+  case $opt in
+    r)
+      echo "removing vmdisks"
+      REMOVE_VMDISKS="-r"
+      ;;
+    f)
+      echo "force_kill"
+      FORCE_KILL="-f"
+      ;;
+    h | \?)
+      usage
+      ;;
+  esac
+done
+
+shift $[$OPTIND-1]
+
+if [ $# -lt 2 ]; then
+    echo "usage: [-f] $SCRIPT_NAME CONFIG_FILE TYPE [TAG]"
+    echo "  CONFIG_FILE: contains experiment parameters"
+    echo "  TYPE: experiment type (local, bindfs, sshfs, p2p, demand, profile)"
+    exit 1
+fi
+
+CONFIG_FILE="$1"
+TYPE="$2"
+if [ $# -eq 3 ]; then
+    TAG="$3"
+fi
+
+. ~/.profile
+if [ -f $CONFIG_FILE ]; then
+    source $CONFIG_FILE
+else
+    cur_time; echo -e "$ID:cleanup_trial: $CONFIG_FILE doesn't exist"; 
+    exit 1
+fi
+
+HOST_EXEC_ROOT=${EXPERIMENT_NAME%%\/*}
+cur_time; echo -e "$ID:cleanup_trial: start"; 
+
+if [ -n "$REMOVE_VMDISKS" ]; then
+    echo "$ID:cleanup_trial: HOST_LDISK_DIR = $HOST_LDISK_DIR"
+    echo "$ID:cleanup_trial: HOST_LOCAL_DIR = $HOST_LOCAL_DIR"
+
+    if [ "$HOST_LOCAL_DIR" == "$HOST_LDISK_DIR" ]; then
+	cur_time; echo -e "$ID:cleanup_trial: using local disk $HOST_LDISK_DIR, don't remove"
+	cur_time; echo -e "$ID:cleanup_trial: done"
+	exit 0
+    fi
+    cur_time; echo -e "$ID:cleanup_trial: removing vmdisks from $HOST_SRC_DIR"
+    find $HOST_SRC_DIR/ -name *.vmdk
+    NUM_DISKS=`find $HOST_SRC_DIR/ -name *.vmdk | wc -l`
+    cur_time; echo -e "$ID:cleanup_trial: $NUM_DISKS to cleanup"
+    if [ $NUM_DISKS -gt 0 ]; then
+	find $HOST_SRC_DIR/ -name *.vmdk | xargs rm
+    fi
+    NUM_DISKS=`find $HOST_SRC_DIR/ -name *.vmdk | wc -l`
+    cur_time; echo -e "$ID:cleanup_trial: $NUM_DISKS remaining"
+    df -h
+    cur_time; echo -e "$ID:cleanup_trial: done"
+    exit 0
+fi
+
+cur_time; echo -e "$ID:cleanup_trial: touch /tmp/cleanup_trial; rm /tmp/cleanup_trial"
+touch /tmp/cleanup_trial; rm /tmp/cleanup_trial
+
+cur_time; echo -e "$ID:cleanup_trial: removing old exec_trial and setup_trial processes"
+cur_time; echo -e "$ID:cleanup_trial: ps auwx | grep exec_trial | awk '{print $2}' | xargs kill"
+ps auwx | grep exec_trial | awk '{print $2}' | xargs kill
+cur_time; echo -e "$ID:cleanup_trial: ps auwx | grep setup_trial | awk '{print $2}' | xargs kill"
+ps auwx | grep setup_trial | awk '{print $2}' | xargs kill
+
+if [ -f "$HOST_EXEC_DIR/GPID" ]; then
+    GPID=`cat "$HOST_EXEC_DIR/GPID"`
+    cur_time; echo -e "$ID:cleanup_trial: GPID=$GPID"
+fi
+
+if [ -f "$HOST_EXEC_DIR/VMXPID" ]; then
+    VMXPID=`cat "$HOST_EXEC_DIR/VMXPID"`
+    cur_time; echo -e "$ID:cleanup_trial: VMXPID=$VMXPID"
+fi
+
+cur_time; echo -e "$ID:cleanup_trial: cd $HOST_BASE_DIR"
+cd $HOST_BASE_DIR; 						
+
+cur_time; echo -e "$ID:cleanup_trial: fusermount -uz $HOST_EXEC_DIR/mnt"
+grep $HOST_EXEC_DIR/mnt /etc/mtab
+fusermount -uz $HOST_EXEC_DIR/mnt &
+sleep 2		
+
+if [ -n "$GPID" ]; then
+    BINDFS=`ps x -o  "%p %r %y %x %c " | 
+    grep $GPID |
+    grep "bindfs" |
+    awk '{print $1}'`
+    cur_time; echo -e "$ID:cleanup_trial: BINDFS=$BINDFS"
+fi
+
+cur_time; echo -e "$ID:cleanup_trial: KILLING LEFTOVER CHILDREN"
+if [ -n "$VMXPID" ]; then
+    cur_time; echo -e "$ID:cleanup_trial: KILLING vmware-vmx"
+    cur_time; echo -e "$ID:cleanup_trial: kill -KILL $VMXPID"
+    kill -KILL $VMXPID  
+fi
+
+if [ -n "$GPID" ] ; then
+    cur_time; echo -e "$ID:cleanup_trial: KILLING spawned children"
+    cur_time; echo -e "$ID:cleanup_trial: kill -KILL -$GPID"
+    kill -KILL -$GPID; 
+fi
+
+if [ "$TYPE" == sshfs ]; then
+    cur_time; echo -e "$ID:cleanup_trial: UNMOUNTING SSHFS"
+    cur_time; echo -e "$ID:cleanup_trial: fusermount -uz $HOST_SRC_DIR/$EXPERIMENT_NAME/$VMDISK"
+    grep $HOST_SRC_DIR/$EXPERIMENT_NAME/$VMDISK /etc/mtab
+    fusermount -uz $HOST_SRC_DIR/$EXPERIMENT_NAME/$VMDISK
+    sleep 2
+    cur_time; echo -e "$ID:cleanup_trial: rm -rf $HOST_EXEC_ROOT"
+    rm -rf $HOST_EXEC_ROOT
+fi
+
+# CLEANUP ZOMBIES - NOT GOOD FOR MULTIPLE RUNS ON A MACHINE
+killall -KILL vmtorrent_stat iostat mpstat vmstat bindfs vmplayer vmware-vmx vmware collectl &> /dev/null
+#cur_time; echo -e "$ID:cleanup_trial: fusermount -uz $HOST_EXEC_DIR/mnt"
+#grep $HOST_EXEC_DIR/mnt /etc/mtab
+#fusermount -uz $HOST_EXEC_DIR/mnt &
+
+DISCONNECTED=`df 2>&1 | grep "Transport endpoint is not connected" | awk '{print $2}'| sed 's/[:\`'\'']//g'`
+for d in $DISCONNECTED; do
+    cur_time; echo -e "$ID:cleanup_trial: $d disconnected, unmounting";
+    fusermount -uz $d
+done
+sleep 2		
+
+
+# POST-RUN TESTS
+#cur_time; echo -e "$ID:cleanup_trial: test_disk ";
+#if [ "$USE_RAM_DISK" == "false" ]; then 
+#    test_disk
+#fi
+
+# SAVE LOGS AND FINISH
+cur_time; echo -e "$ID:cleanup_trial: save logs ";
+save_logs
+cd $HOST_GUEST_DIR
+cur_time; echo -e "$ID:cleanup_trial: rm -rf $HOST_EXEC_ROOT newest"
+rm -rf $HOST_EXEC_ROOT newest
+
+
+cur_time; echo -e "$ID:cleanup_trial: ls $HOST_SRC_DIR="; ls $HOST_SRC_DIR
+
+cur_time; echo -e "$ID:cleanup_trial: done"
+exit 0

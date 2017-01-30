@@ -1,0 +1,130 @@
+#!/bin/bash
+SCRIPT_NAME=exec_trial
+source prefix_trial
+
+if [ $# -lt 2 ]; then
+    echo "Usage: $SCRIPT_NAME CONFIG_FILE TYPE [TAG]"
+    echo "  CONFIG_FILE: contains experiment parameters"
+    echo "  TYPE: experiment type (local, bindfs, sshfs, demand, profile)"
+    exit 1
+fi
+
+CONFIG_FILE="$1"
+TYPE="$2"
+if [ $# -gt 2 ]; then
+    TAG="$3"
+fi
+
+if [ -f $CONFIG_FILE ]; then
+    . ~/.profile
+    source $CONFIG_FILE
+else
+    time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: NO CONFIG FILE FOUND AT $CONFIG_FILE";
+    finish_up
+    exit 1
+fi
+VERB_LEVEL="-q"
+
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: imported parameters";
+time_elapsed; echo -e "$ID:${SCRIPT_NAME}: config=$CONFIG_FILE";
+time_elapsed; echo -e "$ID:${SCRIPT_NAME}: type=$TYPE";
+time_elapsed; echo -e "$ID:${SCRIPT_NAME}: TAG=$TAG";
+time_elapsed; echo -e "$ID:${SCRIPT_NAME}: REPO=$REPO";
+cd $HOST_EXEC_DIR;
+time_elapsed_diff; echo -en "$ID:${SCRIPT_NAME}: in "; pwd
+
+if [ -z $DISPLAY ]; then 
+    export DISPLAY=":$DEFAULT_DISPLAY"
+    time_elapsed; echo -e "$ID:${SCRIPT_NAME}: display set, DISPLAY=$DISPLAY";
+fi
+
+# start VMTorrent (not necessary in 'local' mode)
+if [ "$TYPE" != local ]; then
+    time_elapsed; echo -e "$ID:${SCRIPT_NAME}: setting up VMTorrent";
+    exec_vmtorrent $HOST_CONFIG $TYPE $TAG &> $LIBTORRENT_LOG
+    time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: VMTorrent setup complete";
+fi
+
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: waiting for fs mount";
+counter=0; 
+FS_TIMEOUT_MILLIS=`python -c "print 1000 * $FS_TIMEOUT"`
+while [ ! -e "mnt/$VMDISK.vmdk" -a "$counter" -lt "$FS_TIMEOUT_MILLIS" ]; do 
+    let "counter += $millis_to_sleep";
+    msleep $millis_to_sleep; 
+done ; 
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: fs mounted, counter=$millis_to_sleep (ms), timeout=$FS_TIMEOUT (s)";
+
+
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: starting VM - DO NOT RUN cleanup UNTIL VMXPID RECORDED!";
+if [ -f "mnt/$VMDISK.vmdk" ] ; then 
+    VM_START=`date +%s.%N`
+    ($VTIME vmrun start ${VMDISK}/$VMDISK.vmx) &
+    time_elapsed; echo -e "$ID:${SCRIPT_NAME}: waiting for VMX PID";
+    # note this assumes a single vmm running on a given machine 
+    # will need to be adjusted for multiple machines
+    VMX_TIMEOUT_MILLIS=60000
+    counter=-500
+    while [ -z "$VMXPID" -a "$counter" -lt "$VMX_TIMEOUT_MILLIS" ] ; do 
+	let "counter += 500";
+	msleep 500
+	VMXPID=`ps x -o  "%p %r %y %x %c " | grep vmware-vmx | grep -v grep | awk '{print $1}'`
+    done
+
+    BINDFS_PID=`ps auwx | grep /usr/local/vmtorrent/p2pfs/src/.libs/bindfs | grep -v grep | awk '{print $2}'`
+    
+    if [ -n "$VMXPID" ]; then
+	time_elapsed; echo -e "$ID:${SCRIPT_NAME}: VMXPID=$VMXPID, counter=$counter"
+	sleep 1
+	while [ -n "$VMXPID" -a -n "$BINDFS_PID" ]; do
+	    msleep 200
+	    echo "CHECK DISK -----------------"
+	    df -h | grep $HOST_LOCAL_DIR
+	    echo "CHECK VM -----------------"
+	    ps auwx | grep vmware-vmx | grep -v grep	    
+	    VMXPID=`ps auwx | grep vmware-vmx | grep -v grep | awk '{print $2}'`
+	    if [ -z "$VMXPID" ]; then
+		echo "CHECK VM SANITY ----------"
+		ps auwx | grep vm | grep -v grep
+	    fi
+	    echo "CHECK BINDFS -------------"
+	    ps auwx | grep /usr/local/vmtorrent/p2pfs/src/.libs/bindfs | grep -v grep
+	    BINDFS_PID=`ps auwx | grep /usr/local/vmtorrent/p2pfs/src/.libs/bindfs | grep -v grep | awk '{print $2}'`
+	    if [ -z "$BINDFS_PID" ]; then
+		echo "CHECK BINDFS SANITY ------"
+		ps auwx | grep bindfs | grep -v grep
+	    fi
+	done
+
+#	wait $!
+	
+#       CODE FOR MULTIPLE VMS
+#	numvms=1
+#	numvms_orig=0
+#	while [ "$numvms" -gt "$numvms_orig" ] ; do 
+#	    msleep 50
+#	    numvms=`vmrun list | awk '{print $4}'`
+#	done
+
+	VM_END=`date +%s.%N`
+	VM_RUNTIME=`echo "$VM_END - $VM_START" | bc` 
+	VM_RUNTIME=`echo "$VM_END - $VM_START" | bc` 
+
+	if [ -z "$BINDFS_PID" ]; then
+	    time_elapsed; echo `printf "VM_RAN=%0.6f" $VM_RUNTIME`
+	    time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: ERROR: BINDFS DIED";
+	    df -h
+	    sleep 120
+	else
+	    time_elapsed; echo `printf "VM_RUNTIME=%0.6f" $VM_RUNTIME`
+	    echo `printf "%0.6f" $VM_RUNTIME` > vm_runtime
+	    time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: VM finished";
+	fi
+    else
+	time_elapsed; echo -e "$ID:${SCRIPT_NAME}: UNABLE TO RUN VM";
+    fi
+else 
+    time_elapsed; echo -e "$ID:${SCRIPT_NAME}: $VMDISK.vmdk NOT FOUND";
+fi 
+
+finish_up
+exit 0

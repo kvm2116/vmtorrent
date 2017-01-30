@@ -1,0 +1,91 @@
+#!/bin/bash
+
+usage()
+{
+    echo "usage: setup CONFIG_FILE"
+    echo -e "\tCONFIG_FILE - contains parameters to be used in startup attempt"
+    exit;
+}
+
+# SCRIPT MAIN
+if [ $# -ne 1 ]; then
+    usage
+fi
+
+CONFIG_FILE="$1"
+VERB_LEVEL="-v"
+
+# LOAD THE PROFILE AND AND OWN THE DIRECTORIES
+. ~/.profile
+echo "$HOSTNAME:update_host: BEGIN"
+if [ -f $CONFIG_FILE ]; then
+    source $CONFIG_FILE
+else
+    echo "NO CONFIG FILE FOUND AT $CONFIG_FILE"
+    exit 0
+fi
+
+echo "$HOSTNAME:update_host: HOST_LDISK_DIR = $HOST_LDISK_DIR"
+echo "$HOSTNAME:update_host: HOST_LOCAL_DIR = $HOST_LOCAL_DIR"
+
+echo "$HOSTNAME:update_host: UPDATING $HOST_LDISK_DIR FROM $REPO/$REPO_HOST_SETUP_DIR_NAME/local/"
+prsync -azL $VERB_LEVEL --exclude="*.vmdk" --exclude="*.bz2" $REPO/$REPO_HOST_SETUP_DIR_NAME/local/ $HOST_LDISK_DIR 
+
+if [ "$HOST_LOCAL_DIR" != "$HOST_LDISK_DIR" ]; then
+    echo "$HOSTNAME:update_host: prsync -aL --exclude=\"*.vmdk\" --exclude=\"*.bz2\" $HOST_LDISK_DIR/ $HOST_LOCAL_DIR"
+    prsync -aL --exclude="*.vmdk" --exclude="*.bz2" $HOST_LDISK_DIR/ $HOST_LOCAL_DIR
+fi
+    
+# CHECK IF NEW VMDK NEEDED
+echo "$HOSTNAME:update_host: CHECKING $VMDISK.vmdk on $HOST_LDISK_DIR"
+exp_size=`cat $HOST_LDISK_DIR/vmdisks/$VMDISK/$VMDISK.vmdk.size | awk '{print $1}'`
+act_size=`ls -l $HOST_LDISK_DIR/vmdisks/$VMDISK/$VMDISK.vmdk | awk '{print $5}'`
+
+echo "$HOSTNAME:update_host: expected size=$exp_size, actual size=$act_size"
+if [ -z $act_size ]; then act_size=0; fi
+if [ $act_size -ne $exp_size ]; then
+    rm $HOST_LDISK_DIR/vmdisks/$VMDISK/$VMDISK.vmdk
+    if [ -n $NFS ]; then
+	echo "$HOSTNAME:update_host: SYNCING $NFS/$VMDISK.vmdk.bz2 $HOST_LDISK_DIR/vmdisks/$VMDISK/"
+	prsync $VERB_LEVEL $NFS/$VMDISK.vmdk.bz2 $HOST_LDISK_DIR/vmdisks/$VMDISK/
+	pushd $HOST_LDISK_DIR/vmdisks/$VMDISK/
+	echo "$HOSTNAME:update_host: UNZIPPING $VMDISK.vmdk.bz2"
+	bzip2 -d $VERB_LEVEL $VMDISK.vmdk.bz2
+	rm $VMDISK.vmdk.bz2
+	popd
+	exp_size=`cat $HOST_LDISK_DIR/vmdisks/$VMDISK/$VMDISK.vmdk.size | awk '{print $1}'`
+	act_size=`ls -l $HOST_LDISK_DIR/vmdisks/$VMDISK/$VMDISK.vmdk | awk '{print $5}'`
+	echo "$HOSTNAME:update_host: expected size=$exp_size, actual size=$act_size"
+	if [ -z "$act_size" ] ; then act_size=0 ; fi
+    fi
+    
+    # TEST TO ENSURE VMDK DOWNLOADED PROPERLY
+    if [ $act_size -ne $exp_size ]; then
+	echo "$HOSTNAME:update_host: INCORRECT SIZE FOR $VMDISK.vmdk, SYNCING DIRECTLY W CONTROLLER"
+	rm $HOST_LDISK_DIR/vmdisks/$VMDISK/$VMDISK.vmdk
+	echo "$HOSTNAME:update_host: UPDATING $HOST_LDISK_DIR FROM $REPO/$REPO_HOST_SETUP_DIR_NAME/local/"
+	prsync -azL $VERB_LEVEL --exclude="*.bz2" --exclude="*.vmdk" $REPO/$REPO_HOST_SETUP_DIR_NAME/local/ $HOST_LDISK_DIR
+	prsync -zL $VERB_LEVEL $REPO/$REPO_HOST_SETUP_DIR_NAME/local/vmdisks/$VMDISK/$VMDISK.vmdk $HOST_LDISK_DIR/vmdisks/$VMDISK/
+	act_size=`ls -l $HOST_LDISK_DIR/vmdisks/$VMDISK/$VMDISK.vmdk | awk '{print $5}'`
+	echo "$HOSTNAME:update_host: expected size=$exp_size, actual size=$act_size"
+	if [ -z $act_size ]; then act_size=0; fi
+	if [ $act_size -ne $exp_size ]; then
+	    echo "$HOSTNAME:update_host: FATAL ERROR OBTAINING $VMDISK.vmdk"
+	    echo "$HOSTNAME:update_host: END FAILURE"
+	    exit 1
+	else
+       	    echo "$HOSTNAME:update_host: $VMDISK.vmdk CHECKS OUT"
+	fi
+    else
+       	echo "$HOSTNAME:update_host: $VMDISK.vmdk CHECKS OUT"
+    fi
+else
+    echo "$HOSTNAME:update_host: $VMDISK.vmdk CHECKS OUT"
+fi
+
+if [ "$HOST_LOCAL_DIR" != "$HOST_LDISK_DIR" ]; then
+    echo "$HOSTNAME:update_host: rsync -av $HOST_LDISK_DIR/vmdisks/$VMDISK/ $HOST_LOCAL_DIR/vmdisks/$VMDISK"
+    rsync -av $HOST_LDISK_DIR/vmdisks/$VMDISK/ $HOST_LOCAL_DIR/vmdisks/$VMDISK 
+fi
+
+echo "$HOSTNAME:update_host: END"

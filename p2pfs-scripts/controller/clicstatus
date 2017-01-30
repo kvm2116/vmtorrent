@@ -1,0 +1,40 @@
+#!/bin/bash
+
+if [ $# -gt 2 ]; then
+    echo "usage: clicstatus [LOAD_CUTOFF [MEM_CUTOFF]] "
+    exit 1;
+fi;
+
+BLACKLIST=""
+#BLACKLIST="bern budapest dhaka"
+
+HOST_BASE_DIR="/local/reich"
+HOST_SCRIPT_DIR="$HOST_BASE_DIR/scripts"
+
+LOAD_CUTOFF=100       
+MEM_CUTOFF=0         
+if [ $# -ge 1 ]; then
+    LOAD_CUTOFF=$1
+fi
+if [ $# -ge 2 ]; then
+    MEM_CUTOFF=$2
+fi
+MEM_CUTOFF=`expr $MEM_CUTOFF \* 1000000`
+
+CMD="$HOST_BASE_DIR/run_on_start > /dev/null; $HOST_SCRIPT_DIR/loaded $LOAD_CUTOFF $MEM_CUTOFF"
+
+# GET LIST OF NON-BLACKLISTED TEST MACHINES
+HOSTS=`for i in \`dig clic-lab.clic.cs.columbia.edu +short | grep -v "^;"\`; do dig -x $i +short; done | sort | sed -e "s/edu./edu/"`
+for i in $BLACKLIST; do
+    HOSTS=`echo $HOSTS | sed -e "s/$i.clic.cs.columbia.edu //"`
+done
+
+# OUTPUT MACHINES THAT ARE BOTH UP AND MEET INPUT CRITEREON
+for i in $HOSTS; do
+    (pssh -o StrictHostKeyChecking=no -o ConnectTimeout=3 $i $CMD 2> /dev/null) &
+    CUR_PID="$!"
+    wait $CUR_PID
+    RC="$?"
+#    echo -e "$i\t\t$RC"
+done
+

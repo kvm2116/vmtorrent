@@ -1,0 +1,130 @@
+#!/bin/bash
+
+usage()
+{
+    echo "Usage: buildVMTorrent CONFIG [clean|vmtorrent|fs] "
+    exit 1
+}
+
+if [ $# -gt 2 ]; then
+    usage
+fi
+
+CONFIG_FILE="$1"
+VERB_LEVEL="-v"
+
+# LOAD THE PROFILE AND AND OWN THE DIRECTORIES
+. ~/.profile
+echo "$HOSTNAME:buildVMTorrent: BEGIN"
+if [ -f $CONFIG_FILE ]; then
+    source $CONFIG_FILE
+    echo "REPO_HOST_SETUP_DIR_NAME=$REPO_HOST_SETUP_DIR_NAME"
+else
+    echo "NO CONFIG FILE FOUND AT $CONFIG_FILE"
+    exit 0
+fi
+
+
+# GO TO LOCATION OF LIBTORRENT PACKAGE
+echo -n "$HOSTNAME:buildVMTorrent: pushd "
+pushd $P2PFS_PATH
+
+# HANDLE INPUT
+if [ $# -eq 2 ]; then
+    case "$2" in
+	clean)
+	    echo "$HOSTNAME:buildVMTorrent: make clean"
+	    make clean
+	    ;;
+	vmtorrent)
+	    echo "$HOSTNAME:buildVMTorrent: vmtorrent - clean p2p and src"
+	    echo -n "$HOSTNAME:buildVMTorrent: pushd "
+	    pushd p2p
+	    make clean
+	    echo -n "$HOSTNAME:buildVMTorrent: popd "
+	    popd
+	    echo -n "$HOSTNAME:buildVMTorrent: pushd "
+	    pushd src
+	    make clean
+	    echo -n "$HOSTNAME:buildVMTorrent: popd "
+	    popd
+	    ;;
+	fs)
+	    echo "$HOSTNAME:buildVMTorrent: fs - clean src"
+	    echo -n "$HOSTNAME:buildVMTorrent: pushd "
+	    pushd src
+	    make clean
+	    echo -n "$HOSTNAME:buildVMTorrent: popd "
+	    popd
+	    ;;
+	*)
+	    usage
+	    ;;
+    esac
+fi
+
+  
+#SYNC W/ REPO                          
+echo "$HOSTNAME:buildVMTorrent: sync buildflags and source from $REPO/$REPO_HOST_SETUP_DIR_NAME/shared"
+mv $HOST_SCRIPTS_DIR/buildflags $HOST_SCRIPTS_DIR/buildflags.last                                     
+prsync -zq $REPO/$REPO_HOST_SETUP_DIR_NAME/shared/scripts/buildflags $HOST_SCRIPTS_DIR
+prsync -azq --copy-links \
+    --exclude="libtorrent-*/" \
+    --exclude="libtorrent_*/" \
+    --exclude=".git" \
+    --exclude="doc*/" \
+    --exclude="tests/" \
+    --exclude="*m4*" \
+    --exclude="*.in" \
+    --exclude="configure" \
+    --exclude="ltmain.sh" \
+    --exclude="*#*" \
+    $REPO/$REPO_HOST_SETUP_DIR_NAME/shared/p2pfs/ .
+
+# GET BUILD FLAGS
+source $HOST_SCRIPTS_DIR/buildflags
+
+CF_PAIR=""
+## DETERMINE WHICH FILES LIBTORRENT WILL BE RECOMPILED
+CHANGES=`diff $HOST_SCRIPTS_DIR/buildflags $HOST_SCRIPTS_DIR/buildflags.last | grep ">" | awk '{print $3}' | sed -e 's/-D//' | sed -e 's/\"//'`
+for CHANGE in $CHANGES; do
+    echo "$HOSTNAME:buildVMTorrent: CHANGE=$CHANGE"
+    pwd
+    echo "$HOSTNAME:buildVMTorrent: FILES=\`grep $CHANGES libtorrent/src/* | sed -e 's/:/ /' | awk '{print $1}' | sort -u\`"
+    FILES=`grep $CHANGES libtorrent/src/* | sed -e 's/:/ /' | awk '{print $1}' | sort -u`
+    echo "$HOSTNAME:buildVMTorrent: touching $FILES"
+    touch $FILES
+    CF_PAIR="$CFPAIR\nCHANGE=$CHANGE\tFILES=$FILES"
+done
+
+
+
+# COMPILE
+# BE VERY CAUTIOUS ABOUT USING CFLAGS=".. SYNTAX 
+# SEEMS TO SCREW W/ src/* COMPILATION
+echo "$HOSTNAME:buildVMTorrent: compiling"
+#make CFLAGS="$CFLAGS" CXXFLAGS="$CXXFLAGS" 
+make -s CXXFLAGS="$CXXFLAGS" 
+rc="$?"
+echo -n "$HOSTNAME:buildVMTorrent: popd "
+popd
+
+# PRINT FLAGS, CHANGES, AND RECOMPILED FILES
+echo "$HOSTNAME:buildVMTorrent: finished compiling w/ CXXFLAGS=$CXXFLAGS"
+echo -en "$CF_PAIR"
+if [ $# -eq 1 ]; then
+    case "$1" in
+	clean)
+	    echo "$HOSTNAME:buildVMTorrent: RECOMPILE=libtorrent/* p2p/* src/*"
+	    ;;
+	vmtorrent)
+	    echo "$HOSTNAME:buildVMTorrent: RECOMPILE=p2p/* src/*"
+	    ;;
+	fs)
+	    echo "$HOSTNAME:buildVMTorrent: RECOMPILE=src/*"
+	    ;;
+	*)
+	    ;;
+    esac
+fi
+exit $rc

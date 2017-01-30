@@ -1,0 +1,144 @@
+#!/bin/bash
+SCRIPT_NAME=exec_vmtorrent
+source prefix_trial
+
+if [ $# -lt 2 ]; then
+    echo "Usage: $SCRIPT_NAME CONFIG_FILE TYPE [TAG]"
+    echo "  CONFIG_FILE: contains experiment parameters"
+    echo "  TYPE: experiment type (local, bindfs, sshfs, demand, profile)"
+    exit 1
+fi
+
+CONFIG_FILE="$1"
+TYPE="$2"
+if [ $# -gt 2 ]; then
+    TAG="$3"
+fi
+
+if [ -f $CONFIG_FILE ]; then
+    . ~/.profile
+    source $CONFIG_FILE
+else
+    time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: NO CONFIG FILE FOUND AT $CONFIG_FILE";
+    exit 0
+fi
+
+case "$TYPE" in
+    local)
+	exit ;;
+    bindfs)
+	;;
+    sshfs)
+	;;
+    demand)
+	;;
+    profile)
+	;;
+    *)
+	time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: TYPE must be one of local, bindfs, sshfs, demand, profile";
+	exit 1 ;;
+esac
+
+if [ "$TYPE" == sshfs ]; then HOST_SRC_DIR=$HOST_SRC_DIR/$EXPERIMENT_NAME; fi
+echo $HOST_SRC_DIR
+
+mkdir -p $HOST_EXEC_DIR
+cd $HOST_EXEC_DIR
+
+if [ ! -s "GPID" ]; then
+    ps x -o  "%p %r %y %x %c " | grep $$ | awk '{print $2}' | head -n 1  >> "GPID"      # store pid
+fi
+
+
+# disk directory stores the shadow vmdk file + source vmdk files
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: unpack VM metadata";
+tar -xzf $HOST_SRC_DIR/$VMDISK/$VMDISK.tgz
+
+
+# update the shared folder directory used by the guest
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: update $VMDISK/$VMDISK.vmx to use $HOST_GUEST_DIR";
+sed -i "s#/local/reich/guests#$HOST_GUEST_DIR#" $VMDISK/$VMDISK.vmx
+sed -i "s#/mnt/local/guests#$HOST_GUEST_DIR#" $VMDISK/$VMDISK.vmx
+sed -i "s#/mnt/ram/guests#$HOST_GUEST_DIR#" $VMDISK/$VMDISK.vmx
+
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: mkdir -p disk mnt p2p";
+mkdir -p disk mnt p2p
+
+
+# create symbolic link to shadow file
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: ln -s `pwd`/mnt/$VMDISK.vmdk $VMDISK/$VMDISK.vmdk";
+ln -s `pwd`/mnt/$VMDISK.vmdk $VMDISK/$VMDISK.vmdk
+
+# figure out image size
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: determine size of $VMDISK.vmdk";
+#vmsize=`ls -l $HOST_SRC_DIR/$VMDISK/$VMDISK.vmdk | awk '{print $5}'`
+vmsize=`cat $HOST_SRC_DIR/$VMDISK/$VMDISK.vmdk.size`
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: MOUNT disk=$VMDISK SIZE=$vmsize"
+
+
+# make shadow file
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: make placeholder"
+dd if=/dev/zero of=disk/$VMDISK.vmdk bs=1 count=0 seek=$vmsize
+
+# allow core dumps so we can investigate SIGSEGV
+ulimit -c unlimited
+
+case "$TYPE" in
+    bindfs|sshfs)
+
+	# create the shadow disk image
+	ln -s $HOST_SRC_DIR/$VMDISK/$VMDISK.vmdk disk/$VMDISK.vmdk.src
+
+	# run VMTorrent only as FS
+	time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: \
+	$VTIME $VMTORRENT -f \
+	    --vmt-logfile=$FS_LOG \
+	    --vmt-shadow \
+	    disk/ mnt/ &"
+
+	$VTIME $VMTORRENT -f \
+	    --vmt-logfile=$FS_LOG \
+	    --vmt-shadow \
+	    disk/ mnt/ &
+	;;
+    demand|profile)
+	# set extra flags 
+	FLAGS=""
+ 	if [ "$TYPE" == profile ]; then
+ 	    FLAGS="$FLAGS --vmt-profile=$PROFILE"
+	    FLAGS="$FLAGS --vmt-div-win=$DIVERSITY_WINDOW"
+	    FLAGS="$FLAGS --vmt-bt-win=$BT_PROFILE_WINDOW"
+
+	    # bring a copy of the profile
+	    cp $HOST_CONFIG_DIR/profiles/$PROFILE .
+ 	fi
+
+	# bring a copy of the TORRENT
+	ln -s $HOST_SRC_DIR/$VMDISK/$TORRENT_FILE $TORRENT_FILE
+	
+	time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: \
+	$VTIME $VMTORRENT -f \
+            --vmt-demand \
+            --vmt-logfile=$FS_LOG \
+	    --vmt-torrent=$TORRENT_FILE \
+	    --vmt-peers=$HOST_PEER_FILE \
+	    --vmt-storage=p2p \
+	    --vmt-ul=$UPLOAD_LIMIT \
+	    --vmt-dl=$DOWNLOAD_LIMIT \
+	    $FLAGS \
+	    disk/ mnt/  &"
+
+	# run VMTorrent in p2p mode
+	$VTIME $VMTORRENT -f \
+	    --vmt-demand \
+	    --vmt-logfile=$FS_LOG \
+	    --vmt-torrent=$TORRENT_FILE \
+	    --vmt-peers=$HOST_PEER_FILE \
+	    --vmt-storage=p2p \
+	    --vmt-ul=$UPLOAD_LIMIT \
+	    --vmt-dl=$DOWNLOAD_LIMIT \
+	    $FLAGS \
+	    disk/ mnt/  &
+	;;
+esac
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: VMTorrent running"

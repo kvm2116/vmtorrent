@@ -1,0 +1,33 @@
+#!/bin/bash
+
+if [ $# -ne 1 ]; then
+    echo "usage: this CONFIG_FILE"
+    echo "  CONFIG_FILE: contains experiment parameters"
+    exit 1
+fi
+
+# SET VARIABLES
+
+CONFIG_FILE="$1"
+source $CONFIG_FILE
+    
+# CHECK TYPE VALIDITY
+for TYPE in $TYPES; do
+    case "$TYPE" in
+	local|bindfs|sshfs|p2p|demand|profile) ;;
+	*) echo "Unknown type"; exit 1 ;;
+    esac
+done
+
+TRIALS="`seq 1 $NUMTRIALS`"
+
+echo $TRIALS
+echo $TYPES
+
+# RUN TRIALS
+for TRIAL in $TRIALS; do
+    for TYPE in $TYPES; do
+	echo "cleanup_trial -r $CONFIG_FILE $TYPE $TYPE/$TRIAL"
+	cleanup_trial -r $CONFIG_FILE $TYPE $TYPE/$TRIAL >> $EXEC_TRIAL_LOG
+    done
+done

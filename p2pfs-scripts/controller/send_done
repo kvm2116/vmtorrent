@@ -1,0 +1,70 @@
+#!/bin/bash
+
+if [ $# -ne 1 ]; then
+    echo "usage: this CONFIG_FILE"
+    echo "  CONFIG_FILE: contains experiment parameters"
+    exit 1
+fi
+IFSBAK=$IFS
+
+CONFIG_FILE="$1"
+source $CONFIG_FILE
+
+serverentries=`cat $SERVER_LIST`;
+hostentries=`cat $HOST_LIST`;
+pids=""
+IFS=$'\n'  
+for i in $serverentries; do
+    IFS=$IFSBAK  
+    serverentry=`echo $i | sed -e 's/:/ /g'`   
+    server=`echo $serverentry | awk '{print $1}'`
+    display=`echo $serverentry | awk '{print $2}'`
+    if [ -z "$display" ]; then
+	display="$DEFAULT_DISPLAY"
+    fi
+    user=`echo $serverentry | awk '{print $3}'`
+    if [ -z "$user" ]; then
+	user=`whoami`
+    fi
+    testip=`echo $server | sed -e 's/^\([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\)//'`
+    if [ -n "$testip" ] 
+    then
+	ip=`nslookup $server | \
+	    grep "Address:" | grep -v "#" | \
+	    sed -e 's/^.*Address: *\([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\)$/\1/'`
+    else
+	ip=$server
+    fi
+    echo -e "done: $server" 
+    (pssh -o $SSH_OPTS $server -l $user "touch /tmp/DONE") &
+    pids="$pids $!"	# collect pids
+    IFS=$'\n';
+done
+for i in $hostentries; do
+    IFS=$IFSBAK;
+    hostentry=`echo $i | sed -e 's/:/ /g'`    
+    host=`echo $hostentry | awk '{print $1}'`
+    user=`echo $hostentry | awk '{print $3}'`
+    if [ -z "$user" ]; then
+       user=`whoami`
+    fi
+    testip=`echo $host | sed -e 's/^\([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\)//'`
+    if [ -n "$testip" ] 
+    then
+	ip=`nslookup $host | \
+	    grep "Address:" | grep -v "#" | \
+	    sed -e 's/^.*Address: *\([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\)$/\1/'`
+    else
+	ip=$host
+    fi
+    echo -e "done: $host" 
+    (pssh -o $SSH_OPTS $host -l $user "touch /tmp/DONE") &
+    pids="$pids $!"	# collect pids
+    IFS=$'\n';
+done
+IFS=$IFSBAK;
+
+for pid in $pids; do
+    wait $pid
+done;
+echo "all done"

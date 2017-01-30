@@ -1,0 +1,38 @@
+#!/bin/bash
+
+if [ $# -lt 2 ]; then
+    echo "Usage: ./this CONFIG_FILE TYPE [TAG]"
+    echo "  CONFIG_FILE: contains experiment parameters"
+    echo "  TYPE: experiment type (local, bindfs, sshfs, demand, profile)"
+    exit 1
+fi
+
+CONFIG_FILE=$1
+TYPE="$2"
+if [ $# -gt 2 ]; then
+    TAG="$3"
+fi
+
+if [ -f $CONFIG_FILE ]; then
+    . ~/.profile
+    source $CONFIG_FILE
+else
+    echo -e "$ID:exec_trial_wrapper: NO CONFIG FILE FOUND AT $CONFIG_FILE";
+    exit 0
+fi
+
+echo -e "$ID:exec_trial_wrapper: REPO=$REPO";
+cd $HOST_BASE_DIR; 
+mkdir -p $HOST_EXEC_DIR
+echo -e "$ID:exec_trial_wrapper: HOST_EXEC_DIR=$HOST_EXEC_DIR";
+cd $HOST_EXEC_DIR;
+echo -en "$ID:exec_trial_wrapper: in "; pwd
+
+echo "exec_trial $@ >> $HOST_EXEC_DIR/exec_trial.log 2>&1" > exec_trial_at.sh
+echo -n "$ID:exec_trial_wrapper: at now "
+cat $HOST_EXEC_DIR/exec_trial_at.sh
+echo -n "$ID:exec_trial_wrapper: "
+at -f $HOST_EXEC_DIR/exec_trial_at.sh now
+sleep 1
+echo "$ID:exec_trial_wrapper DONE"
+exit 0

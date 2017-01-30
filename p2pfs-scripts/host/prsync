@@ -1,0 +1,37 @@
+#!/bin/bash
+
+### ABOUT
+### Runs rsync, retrying on errors up to a maximum number of tries.
+### Simply edit the rsync line in the script to whatever parameters you need.
+
+# Trap interrupts and exit instead of continuing the loop
+trap "echo Exited!; exit; killall rsync" SIGINT SIGTERM
+
+MAX_RETRIES=3
+TIMEOUT=60
+
+i=0
+BASE=15
+#echo "prsync: MAX_RETRIES=$MAX_RETRIES"
+
+# Set the initial return value to failure
+# Nothing can come in between this and the test!
+false
+while [ $? -ne 0 -a $i -lt $MAX_RETRIES ]
+do
+ sleep $[$RANDOM % $BASE]  
+ i=$(($i+1))
+ # sleep an exponentially increasing amount of time 
+ if [ $BASE -lt 200 ]; then
+     let BASE=$BASE*2
+ fi
+ rsync -P --timeout=$TIMEOUT $@
+ # Nothing can come after this
+done
+
+if [ $i -eq $MAX_RETRIES ]
+then
+  echo " rsync -P --timeout=$TIMEOUT $@ failed after $i (re)tries, giving up." 1>&2
+else
+  echo " rsync -P --timeout=$TIMEOUT $@ succeeded on the (re)try $i." 1>&2
+fi

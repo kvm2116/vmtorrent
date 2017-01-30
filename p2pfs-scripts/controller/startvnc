@@ -1,0 +1,6 @@
+#!/bin/sh
+
+vnc4server -kill :1
+vnc4server -kill :2
+vnc4server :1 -geometry 1270x760
+vnc4server :2 -geometry 1600x1050

@@ -1,0 +1,54 @@
+#!/bin/bash
+
+usage()
+{
+    echo "this:#servers #nodes image machine_type [tag]"
+    exit 1;
+}
+
+if [ $# -gt 5 -o $# -lt 4 ]; then
+    usage
+fi
+
+n_servers=$1
+n_nodes=$2
+i_type=$3
+m_type=$4
+tag=$5
+
+name=s${1}-n${2}
+if [ -n "$tag" ]; then
+    name=$name-$tag
+fi
+lname=`echo $name | awk '{print tolower($0)}'`
+
+rm $name.*
+
+# create ns file
+cp S-N.ns.template $name.ns
+sed -ie "s/n_servers/$n_servers/" $name.ns 
+sed -ie "s/n_nodes/$n_nodes/" $name.ns 
+sed -ie "s/i_type/$i_type/" $name.ns 
+sed -ie "s/m_type/$m_type/" $name.ns 
+rm $name.nse
+
+
+
+# node addresses
+nodes=`seq 1 $n_nodes`
+#nodes=`jot $n_nodes 1`
+for i in $nodes; do
+    echo n-${i}.$lname.vmtorrent.emulab.net:74 >> $name.n
+    echo n-${i}.$lname.vmtorrent.emulab.net >> $name.all
+done
+
+# server addresses
+# node addresses
+servers=`seq 1 $n_servers`
+#servers=`jot $n_servers 1`
+for i in $servers; do
+    echo s-${i}.$lname.vmtorrent.emulab.net:74 >> $name.s
+    echo s-${i}.$lname.vmtorrent.emulab.net >> $name.all
+done
+
+#scp $name.n $name.s $REPO/scripts/controller/

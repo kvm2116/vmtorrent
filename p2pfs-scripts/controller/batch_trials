@@ -1,0 +1,21 @@
+#!/bin/bash
+
+if [ $# -lt 2 ]; then
+    echo "usage: batch experiment_name #trials [topology]"
+    echo -e "\thostfile must be named with the number of hosts"
+    exit 1
+fi
+
+EXPERIMENT_NAME="$1"
+NUMTRIALS="$2"
+if [ $# -eq 3 ]; then
+    TOPOLOGY="$3"
+    config_trials -b -r $EXPERIMENT_NAME-$TOPOLOGY $EXPERIMENT_NAME.n $EXPERIMENT_NAME.s $NUMTRIALS
+    exec_trials ../../config/experiment/$EXPERIMENT_NAME-$TOPOLOGY.cfg
+#    send_done ../../config/experiment/$EXPERIMENT_NAME-$TOPOLOGY.cfg
+else
+    config_trials -br $EXPERIMENT_NAME $EXPERIMENT_NAME.n $EXPERIMENT_NAME.s $NUMTRIALS
+    exec_trials ../../config/experiment/$EXPERIMENT_NAME.cfg
+#    send_done ../../config/experiment/$EXPERIMENT_NAME.cfg
+fi
+

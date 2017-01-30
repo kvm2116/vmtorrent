@@ -1,0 +1,166 @@
+#!/bin/bash
+SCRIPT_NAME=setup_trial
+source prefix_trial
+
+if [ $# -lt 2 ]; then
+    echo "Usage: $SCRIPT_NAME CONFIG_FILE TYPE [TAG]"
+    echo "  CONFIG_FILE: contains experiment parameters"
+    echo "  TYPE: experiment type (local, bindfs, sshfs, demand, profile)"
+    exit 1
+fi
+
+CONFIG_FILE="$1"
+TYPE="$2"
+if [ $# -gt 2 ]; then
+    TAG="$3"
+fi
+
+if [ -f $CONFIG_FILE ]; then
+    . ~/.profile
+    source $CONFIG_FILE
+else
+    time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: NO CONFIG FILE FOUND AT $CONFIG_FILE";
+    finish_up
+    exit 1
+fi
+VERB_LEVEL="-q"
+
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: imported parameters";
+time_elapsed; echo -e "$ID:${SCRIPT_NAME}: config=$CONFIG_FILE";
+time_elapsed; echo -e "$ID:${SCRIPT_NAME}: type=$TYPE";
+time_elapsed; echo -e "$ID:${SCRIPT_NAME}: TAG=$TAG";
+time_elapsed; echo -e "$ID:${SCRIPT_NAME}: REPO=$REPO";
+
+if [ -z $DISPLAY ]; then 
+    export DISPLAY=":$DEFAULT_DISPLAY"
+    time_elapsed; echo -e "$ID:${SCRIPT_NAME}: display set, DISPLAY=$DISPLAY";
+fi
+
+time_elapsed; echo -e "$ID:${SCRIPT_NAME}: sudo $HOST_SCRIPTS_DIR/clear_cache";
+sudo $HOST_SCRIPTS_DIR/clear_cache
+
+touch /tmp/`hostname`
+cd $HOST_BASE_DIR; 
+mkdir -p $HOST_EXEC_DIR
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: created directories";
+cd $HOST_GUEST_DIR
+rm newest
+ln -s $EXPERIMENT_NAME newest
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: made link $EXPERIMENT_NAME -> newest in $HOST_GUEST_DIR";
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: HOST_EXEC_DIR=$HOST_EXEC_DIR";
+cd $HOST_EXEC_DIR;
+time_elapsed_diff; echo -en "$ID:${SCRIPT_NAME}: in "; pwd
+
+if [ ! -s "GPID" ]; then
+    ps x -o  "%p %r %y %x %c " | 
+    grep $$ | 
+    awk '{print $2}' | 
+    head -n 1  >> "GPID"
+    time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: obtained group process ID";
+fi
+
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: starting resource logging";
+(collectl --all -P --utc &> collectl.log) &
+(collectl -sZ -i:10 --verbose &> collectl_proc.log) &
+(while [ 1 ]; do  echo -n "time: "; date +%s.%N; (du -sk $HOST_GUEST_DIR/newest/* 2> /dev/null) ; sleep 1; done) > du.log &
+#(vmtorrent_stat > /dev/null &)  # bizarre but this breaks unless output is redirected
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: started resource logging";
+
+# run benchmarks
+#if [ "$TYPE" != bindfs ]; then
+#    time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: start benchmarks";
+#    time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: done benchmarks";
+#fi
+
+# startup vmware
+time_elapsed; echo -e "$ID:${SCRIPT_NAME}: restarting vmware";
+killall vmware; 
+#(vmware &);
+time_elapsed; echo -e "$ID:${SCRIPT_NAME}: letting vmware warm up";
+#sleep 10
+
+# DETECT VMWARE PROBLEMS AND RETRY
+#VMWARE_UP=`ps auwx | grep vmware | grep -v -e "-" -e grep | wc -l`
+#if [ $VMWARE_UP -eq 0 ]; then
+#time_elapsed; echo -e "$ID:${SCRIPT_NAME}: vmware startup failed, restarting vnc server";
+
+# RESTART VNC
+if [ "$VNC_RESTART" -eq 0 ]; then
+    vnc_restart $CONFIG_FILE
+fi 
+
+
+# EXPORT DISPLAY, START VMWARE
+echo "$ID:${SCRIPT_NAME}: export DISPLAY="$DISPLAY""
+export DISPLAY="$DISPLAY"
+time_elapsed; echo -e "$ID:${SCRIPT_NAME}: starting vmware";
+(vmware &)
+sleep 6
+time_elapsed; echo -e "$ID:${SCRIPT_NAME}: letting vmware warm up";
+VMWARE_UP=`ps auwx | grep vmware | grep -v -e "-" -e grep | wc -l`
+if [ $VMWARE_UP -eq 0 ]; then
+    time_elapsed; echo -e "$ID:${SCRIPT_NAME}: vmware startup failed twice, giving up";
+else
+    time_elapsed; echo -e "$ID:${SCRIPT_NAME}: vmware restart succeeded";
+fi
+#else
+#    time_elapsed; echo -e "$ID:${SCRIPT_NAME}: vmware warmed up";
+#fi
+
+
+if [ "$TYPE" == local ]; then
+    time_elapsed; echo -e "$ID:${SCRIPT_NAME}: copying local file";
+    # in local mode, make a copy of the .vmdk file
+    if [ -d $HOST_SRC_DIR/$VMDISK ]; then
+	prsync -az $VERB_LEVEL $HOST_SRC_DIR/$VMDISK/ $VMDISK/
+    fi
+    time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: finished copy local file";
+fi
+
+if [ "$TYPE" == sshfs ]; then
+    time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: mounting sshfs,HOST_SSHFS_FILE=$HOST_SSHFS_FILE";
+    SERVER=`cat $HOST_SSHFS_FILE`
+    HOST_SRC_DIR=$HOST_SRC_DIR/$EXPERIMENT_NAME
+    mkdir -p $HOST_SRC_DIR/$VMDISK;
+
+    ($VTIME sshfs -o StrictHostKeyChecking=no $SSHFS_FLAGS -o idmap=user $SERVER:$REMOTE_SRC_DIR/$VMDISK $HOST_SRC_DIR/$VMDISK &> sshfs.log) &
+    SSHFS_TIMEOUT_MILLIS=`python -c "print 1000 * $FS_TIMEOUT"`
+    counter=0; 
+    time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: waiting for sshfs mount";
+    while [ ! -e "$HOST_SRC_DIR/$VMDISK/$VMDISK.vmdk" -a "$counter" -lt "$SSHFS_TIMEOUT_MILLIS" ] ; do 
+        let "counter += $millis_to_sleep";
+	msleep $millis_to_sleep; 
+    done
+    if [ ! -e "$HOST_SRC_DIR/$VMDISK/$VMDISK.vmdk" ] ; then 
+	time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: $VMDISK.vmdk NOT FOUND IN SSHFS MOUNT/SSHFS MOUNT FAILED";
+	echo "$VMDISK.vmdk NOT FOUND IN SSHFS MOUNT/SSHFS MOUNT FAILED" >> sshfs.log ; 
+	
+	($VTIME sshfs -o StrictHostKeyChecking=no $SSHFS_FLAGS -o idmap=user $SERVER:$REMOTE_SRC_DIR/$VMDISK $HOST_SRC_DIR/$VMDISK &> sshfs.log) &
+	SSHFS_TIMEOUT_MILLIS=`python -c "print 1000 * $FS_TIMEOUT"`
+	counter=0; 
+	time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: waiting for sshfs mount";
+	while [ ! -e "$HOST_SRC_DIR/$VMDISK/$VMDISK.vmdk" -a "$counter" -lt "$SSHFS_TIMEOUT_MILLIS" ] ; do 
+            let "counter += $millis_to_sleep";
+	    msleep $millis_to_sleep; 
+	done
+	if [ ! -e "$HOST_SRC_DIR/$VMDISK/$VMDISK.vmdk" ] ; then 
+	    time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: $VMDISK.vmdk NOT FOUND IN SSHFS MOUNT/SSHFS MOUNT FAILED";
+	    echo "$VMDISK.vmdk NOT FOUND IN SSHFS MOUNT/SSHFS MOUNT FAILED" >> sshfs.log ; 
+	    prsync $VERB_LEVEL /tmp/`hostname` $REPO/experiments/STATUS_TRIAL_SETUP/
+	    finish_up
+	    exit 1
+	fi;
+    fi; 
+    time_elapsed_diff;  echo -e "$ID:${SCRIPT_NAME}: sshfs mounted, delay=$counter (ms), timeout=$SSHFS_TIMEOUT (s)";
+    time_elapsed_diff >> sshfs.log; echo -e "$ID:${SCRIPT_NAME}: sshfs mounted, delay=$counter (ms), timeout=$SSHFS_TIMEOUT (s)" >> sshfs.log; 
+fi
+
+# adjust parameters to host, create valid vmware directory
+echo $EXPERIMENT_NAME > $GUEST_SCRIPT_DIR/$PARAM_FILE
+echo $GUEST_SCRIPT >> $GUEST_SCRIPT_DIR/$PARAM_FILE 
+echo $POSTSCRIPT_ACTION >> $GUEST_SCRIPT_DIR/$PARAM_FILE 
+time_elapsed; echo -e "$ID:${SCRIPT_NAME}: guest parameters for $EXPERIMENT_NAME set";
+
+prsync $VERB_LEVEL /tmp/`hostname` $REPO/experiments/STATUS_TRIAL_SETUP/
+time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: complete";
+

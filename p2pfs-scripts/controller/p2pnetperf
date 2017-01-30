@@ -1,0 +1,142 @@
+#!/bin/bash
+
+if [ $# != 2 ]; then
+	#TODO : Log this error message
+        echo "usage : p2pnetperf <nettest_config_file> <experiment_config_file>" 
+        exit 1
+fi
+
+NET_CFG=$1
+EXP_CFG=$2
+
+if [ -f $NET_CFG -a -f $EXP_CFG ]; then
+	source $EXP_CFG
+else
+	#TODO : Log error message
+        echo "p2pnetperf : invalid path : check  <nettest_config_file> or <experiment_config_file>"
+        exit 1
+fi
+
+ERROR_FILE=$CONTROLLER_RESULTS_DIR"/netperf.error"
+LOG_FILE=$CONTROLLER_RESULTS_DIR"/netperf.log"
+
+#test whether node mentioned in nettest onfig file exists or not 
+check_valid_nodes() {
+
+        is_ok=0
+	echo "p2pnetperf : checking nodes for this timeslot" | tee -a $LOG_FILE
+        for node in $@
+        do
+                ping -c 1 "$node.$CFG.vmtorrent.emulab.net"
+                if [ $? -ne 0 ]; then
+                        #TODO : Log error message
+			echo "check_valid_nodes : $node doesn't exist" | tee -a $ERROR_FILE
+                        is_ok=1
+                fi
+        done
+}
+
+#wait until all nettest in given timeslot are finished
+wait_pids() {
+	np=$#
+	plist=$@
+	echo "Waiting for all nettests in this timeslot ..." | tee -a $LOG_FILE
+	while [ $np -gt 0 ]; do
+		echo "Waiting for pids ($plist) to finish ..." | tee -a $LOG_FILE 
+		for p in $plist; do
+			ps ax | grep $p | grep -v grep
+			if [ $? != 0 ]; then
+				echo "Nettest pid : ($p) is completed" | tee -a $LOG_FILE
+				np=`expr $np - 1`
+			fi
+		done
+		sleep 10
+	done		
+}
+
+begin() {
+
+	#cleanup and prepare
+        echo "" > $LOG_FILE
+        echo "" > $ERROR_FILE
+	cnt=`cat $NET_CFG | grep -v '^$' | wc -l` 
+	i=2
+	
+	while [ $i -le $cnt ]; do
+		
+		#get desired line from the nettest config file
+		line=`cat $NET_CFG | grep -v '^$' | head -$i | tail -1`
+		
+		#get timeslot
+		timeslot=`echo $line | awk '{ print $1 }'`
+		is_num=`echo "$timeslot" | awk '$0 ~/[^0-9]/ { exit 1 }'`
+		if [ $? -ne 0 ]; then
+			echo "Skip timeslot $timeslot because of invalid entries" | tee -a $ERROR_FILE
+			#next timeslot
+                        i=`expr $i + 1`
+			continue
+		fi
+
+		#from_list : nettest clients running netperf
+		#to_list : nettest servers running netserver
+		#pairing : from_list[i] --> to_list[i]
+		list=`echo $line | awk '{ $1=""; print }'`
+		from_list=""
+		to_list=""
+		for pair in $list
+		do
+			index=$(echo `expr index $pair :`)
+			index=`expr $index - 1`
+			from_list+=${pair:0:$index}
+			from_list+=" "
+			index=`expr $index + 1`
+			to_list+=${pair:$index:${#pair}}
+			to_list+=" "
+		done
+		
+		#check whether nodes with node names exist or not 
+		#if not, skip this timeslot because of corrupt entries
+		is_ok=0
+		check_valid_nodes $from_list $to_list
+		if [ $is_ok != 0 ]; then
+			echo "Skip timeslot $timeslot because of invalid entries" | tee -a $ERROR_FILE   
+			#next timeslot
+			i=`expr $i + 1`
+			continue
+		fi 
+		
+		#start executing all nettests for this timeslot in parallel
+		echo "" | tee -a $LOG_FILE
+		echo "<TIMESLOT $timeslot>" | tee -a $LOG_FILE
+		echo "Starting all nettests in timeslot $timeslot" | tee -a $LOG_FILE
+		num_nodes=`echo $from_list | wc -w`
+		pid_list=""
+		for (( j = 1 ; j <= $num_nodes ; j++ ))
+        	do
+			#nettest client : runs netperf
+                	client=`echo $from_list | awk '{ print $'$j' }'`
+                	client="$client.$CFG.vmtorrent.emulab.net"
+			#nettest server : runs netserver	
+                	server=`echo $to_list | awk '{ print $'$j' }'`
+			nettest_cmd="$HOST_SCRIPT_DIR/nettest $server"
+			
+			#invoke nettest for every c-->s for this timeslot
+			(ssh -o $SSH_OPTS $client -l `whoami` "$nettest_cmd") &		
+			echo "$nettest_cmd is started with pid : ($!)" | tee -a $LOG_FILE
+			pid_list+="$!"
+			pid_list+=" "
+        	done
+		
+		#wait for all nettests for this timeslot 
+		wait_pids $pid_list
+		echo "Finished all nettests for timeslot $timeslot" | tee -a $LOG_FILE 
+		echo "</TIMESLOT $timeslot>" | tee -a $LOG_FILE
+		echo "" | tee -a $LOG_FILE
+					
+		#next timeslot
+		i=`expr $i + 1`
+	done	
+}
+
+
+begin $NET_CFG

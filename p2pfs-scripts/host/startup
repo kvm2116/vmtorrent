@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# VARIABLES
+VERB_LEVEL="-v"
+SETTLE_SECONDS=60
+
+# LOAD THE PROFILE AND AND OWN THE DIRECTORIES
+. ~/.profile
+echo "$HOSTNAME:startup: BEGIN"
+ssh -o StrictHostKeyChecking=no ${REPO%%:*} 'hostname' 
+sudo chown -R `whoami`:VMTorrent /tmp
+sudo chown -R `whoami`:VMTorrent /usr/local/vmtorrent
+touch /tmp/`hostname`
+
+# WAIT FOR THE NODE TO SETTLE
+echo "$HOSTNAME:startup: GIVE NODE TIME TO SETTLE"
+sleep $SETTLE_SECONDS
+sleep $[$RANDOM % 10]
+
+# SYNC SCRIPTS W/ THE REPO
+echo "$HOSTNAME:startup: UPDATING $HOST_BIN_DIR/scripts"
+prsync -azL $VERB_LEVEL $REPO/scripts/host/ $HOST_BIN_DIR/scripts 
+
+# LET THE CONTROLLER KNOW THAT WE'VE FINISHED
+echo "$HOSTNAME:startup: SIGNAL CONTROLLER"
+touch /tmp/STARTUP_COMPLETE
+prsync $VERB_LEVEL /tmp/`hostname` $REPO/experiments/STATUS_READY/
+
+# WAIT UNTIL DONE SIGNAL IS RECEIVED FROM CONTROLLER
+echo "$HOSTNAME:startup: WAIT FOR DONE SIGNAL FROM CONTROLLER"
+while [ ! -f /tmp/DONE ]; do
+    sleep 1;
+done
+echo "$HOSTNAME:startup: COMPLETE"

@@ -1,0 +1,41 @@
+#!/bin/bash
+
+usage()
+{
+    echo "usage: this CONFIG_FILE"
+    echo -e "\tCONFIG_FILE - contains parameters to be used in startup attempt"
+    exit;
+}
+
+
+
+# SCRIPT MAIN
+if [ $# -ne 1 ]; then
+    usage
+fi
+
+CONFIG_FILE="$1"
+VERB_LEVEL="-v"
+
+# LOAD THE PROFILE AND AND OWN THE DIRECTORIES
+. ~/.profile
+echo "$HOSTNAME:vnc_restart: BEGIN"
+if [ -f $CONFIG_FILE ]; then
+    source $CONFIG_FILE
+else
+    echo "NO CONFIG FILE FOUND AT $CONFIG_FILE"
+    exit 0
+fi
+
+# RESTART VNC PLAYER
+echo "$ID:${SCRIPT_NAME}: vnc4server -kill $DISPLAY"
+vnc4server -kill $DISPLAY
+echo "$ID:${SCRIPT_NAME}: ps auwx | grep vnc | grep $DISPLAY | awk '{print \$2}' | xargs kill -9"
+ps auwx | grep vnc | grep $DISPLAY | awk '{print $2}' | xargs kill -9
+echo "$ID:${SCRIPT_NAME}: sudo rm -f /tmp/.X${DISPLAY#:*}-lock /tmp/.X11-unix/X${DISPLAY#:*}"
+sudo rm -f /tmp/.X${DISPLAY#:*}-lock /tmp/.X11-unix/X${DISPLAY#:*}
+echo "$ID:${SCRIPT_NAME}: vnc4server $DISPLAY -localhost"
+vnc4server $DISPLAY -localhost
+sleep 5
+
+echo "$HOSTNAME:vnc_restart: END"

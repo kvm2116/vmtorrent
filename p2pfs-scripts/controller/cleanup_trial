@@ -1,0 +1,127 @@
+#!/bin/bash
+
+usage(){
+    echo "usage: this [-f] [-r] [-c] CONFIG_FILE TYPE [TAG]"
+    echo "  CONFIG_FILE: contains experiment parameters"
+    echo "  TYPE: experiment type (local, bindfs, sshfs, demand, profile)"
+    exit 1
+}
+
+while getopts "rcfh" opt; do
+  case $opt in
+    c)
+      echo "run cleanup cmds"
+      CALL_CLEANUP="-c"
+      ;;
+    r)
+      echo "removing vmdisks"
+      REMOVE_VMDISKS="-r"
+      ;;
+    f)
+      echo "force_kill"
+      FORCE_KILL="-f"
+      ;;
+    h | \?)
+      usage
+      ;;
+  esac
+done
+shift $[$OPTIND-1]
+
+IFSBAK=$IFS
+
+CONFIG_FILE="$1"
+TYPE="$2"
+if [ $# -gt 2 ]; then
+    TAG="$3"
+fi
+
+. ~/.profile
+source $CONFIG_FILE
+
+
+
+clean_cmd="cleanup_trial $REMOVE_VMDISKS $HOST_CONFIG $TYPE $TAG"
+
+echo -e "cleanup_trial: cleaning up servers" 
+pids=""
+index=0
+SERVER_ENTRIES=`cat $SERVER_LIST`;
+IFS=$'\n'  
+if [ -n "$REMOVE_VMDISKS" -o -n "$FORCE_KILL" ]; then
+    for i in $SERVER_ENTRIES; do
+	IFS=$IFSBAK  
+	serverentry=`echo $i | sed -e 's/:/ /g'`   
+	server=`echo $serverentry | awk '{print $1}'`
+	display=`echo $serverentry | awk '{print $2}'`
+	if [ -z "$display" ]; then
+	    display="$DEFAULT_DISPLAY"
+	fi
+	user=`echo $serverentry | awk '{print $3}'`
+	if [ -z "$user" ]; then
+	    user=`whoami`
+	fi
+	testip=`echo $server | sed -e 's/^\([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\)//'`
+	if [ -n "$testip" ] 
+	then
+	    ip=`nslookup $server | \
+		grep "Address:" | grep -v "#" | \
+		sed -e 's/^.*Address: *\([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\)$/\1/'`
+	else
+	    ip=$server
+	fi
+	
+	echo -e "cleanup_trial: cleaning $server"
+	echo "ssh -o $SSH_OPTS $server -l $user \"killall test_p2p\""
+	ssh -o $SSH_OPTS $server -l $user "killall test_p2p"
+	if [ -n "$REMOVE_VMDISKS" ]; then
+	    (ssh -o $SSH_OPTS $server -l $user ". .profile; $clean_cmd; echo \"DONE\";") &
+	    sleep 1
+	fi
+	IFS=$'\n'  
+    done
+    IFS=$IFSBAK
+fi  
+
+
+HOST_ENTRIES=`cat $HOST_LIST`;
+index=0
+pids=""
+IFS=$'\n';
+for i in $HOST_ENTRIES; do
+    IFS=$IFSBAK;
+    let "index += 1"
+    hostentry=`echo $i | sed -e 's/:/ /g'`    
+    host=`echo $hostentry | awk '{print $1}'`
+    user=`echo $hostentry | awk '{print $3}'`
+    if [ -z "$user" ]; then
+       user=`whoami`
+    fi
+    testip=`echo $host | sed -e 's/^\([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\)//'`
+    if [ -n "$testip" ] 
+    then
+	ip=`nslookup $host | \
+	    grep "Address:" | grep -v "#" | \
+	    sed -e 's/^.*Address: *\([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\)$/\1/'`
+    else
+	ip=$host
+    fi
+
+#    host_bad=`(ls ~/VMTorrent/experiments/STATUS_BAD_DISK/$host 2> /dev/null) | wc -w`
+#    if [ $host_bad -eq 1 ]; then
+#	echo -e "cleanup_trial: bad host, skipping $host" >> $EXEC_TRIAL_LOG
+#	continue
+#    fi
+
+    (ssh -o $SSH_OPTS $host -l $user ". .profile; $clean_cmd") &
+    pids="$pids $!"	# collect pids
+    sleep 3
+
+    IFS=$'\n';
+done
+IFS=$IFSBAK;
+
+for pid in $pids; do
+    wait $pid
+done;
+echo "cleanup finished"

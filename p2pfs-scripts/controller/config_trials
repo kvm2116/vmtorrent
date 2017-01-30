@@ -1,0 +1,277 @@
+#!/bin/bash
+
+SSH_OPTS="PasswordAuthentication=no -o StrictHostKeyChecking=no"
+
+usage(){
+    echo "usage: config [-b] [-r] [-g grace] [-t topology] [-n hostfile] [-s serverfile] [-d diversity_window] [-w bt_window] [-p profile] [-v vmdisk_name] [-k guest_script] experiment_name #trials delay [trial_type_1 trial_type_2 ...]" 
+    echo "usage: config [-h]"
+    echo -e "\t-b:\t run as part of a batch job"
+    echo -e "\t-r:\t use the RAM disk"
+    exit 1
+}
+
+GRACE=7200
+BATCH=0
+USE_RAM_DISK="false"
+while getopts "brcsht:n:s:w:d:p:v:k:g:" opt; do
+    case $opt in
+	b)
+	    echo "batch job"
+	    BATCH=1
+	    ;;
+	r)
+	    echo "use ram disk"
+	    USE_RAM_DISK="true"
+	    ;;
+	t)
+	    echo "$OPTARG TOPOLOGY"
+	    TOPOLOGY=$OPTARG
+	    ;;
+	s)
+	    echo "USE SERVERFILE=$OPTARG"
+	    SERVER_LIST=$OPTARG
+	    ;;
+	n)
+	    echo "USE HOSTFILE=$OPTARG"
+	    HOST_LIST=$OPTARG
+	    ;;
+	d)
+	    echo "USE DIVERSITY_WINDOW=$OPTARG"
+	    DIVERSITY_WINDOW=$OPTARG
+	    ;;
+	g)
+	    echo "USE GRACE=$OPTARG"
+	    GRACE=$OPTARG
+	    ;;
+	w)
+	    echo "USE BT_PROFILE_WINDOW=$OPTARG"
+	    BT_PROFILE_WINDOW=$OPTARG
+	    ;;
+	p)
+	    echo "USE PROFILE=$OPTARG"
+
+	    EXTENSION=${OPTARG##*\.}
+
+	    if [ $EXTENSION != "profile" ]; then
+		echo "Error: bad profile name, profile must be named profile_name.profile"
+		exit 1
+	    fi
+
+	    if [ ! -f ../../config/profiles/$OPTARG ]; then
+		echo "Error: no such profile name in ../../config/profiles"
+		exit 1
+	    fi
+
+	    PROFILE=$OPTARG
+	    ;;
+	v)
+	    echo "USE VMDISK=$OPTARG"
+
+	    if [ ! -d ../../vmdisks/$OPTARG ]; then
+		echo "Error: vm does not appear to exist, check ../../vmdisks"
+		exit 1
+	    fi
+
+	    VMDISK=$OPTARG
+	    ;;
+	k)
+	    echo "USE GUEST_SCRIPT=$OPTARG"
+
+	    EXTENSION=${OPTARG##*\.}
+
+	    if [ $EXTENSION != "exe" -a $EXTENSION != "sh" ]; then
+		echo "Error: bad script name, scripts must have extension .exe for windows and .sh for linux guests"
+		exit 1
+	    fi
+
+	    if [ ! -f ../guest/$OPTARG ]; then
+		echo "Error: no such script in ../guest"
+		exit 1
+	    fi
+
+	    GUEST_SCRIPT=$OPTARG
+	    ;;
+	h | \?)
+	    usage
+	    ;;
+  esac
+done
+shift $[$OPTIND-1]
+
+if [ $# -lt 3 ]; then
+    usage
+fi
+
+EXPERIMENT_NAME="$1"
+NUMTRIALS="$2"
+DELAY="$3"
+shift 3
+
+if [ $# -ne 0 ]; then
+    TRIAL_TYPES="$@"
+else
+    TRIAL_TYPES="bindfs profile sshfs demand"
+fi
+CONFIG_PATH="../../config/experiment"
+
+for TRIAL_TYPE in $TRIAL_TYPES; do
+    if [ $TRIAL_TYPE == "profile" ]; then
+	if [ -z "$BT_PROFILE_WINDOW" -o -z "$DIVERSITY_WINDOW" -o -z "$PROFILE" ]; then
+	    echo "Error: when running profile-based experiment, options -d, -w, and -p must be specified"
+	    exit 1
+	fi
+    fi
+done
+
+if [ -z $HOST_LIST ]; then
+    HOST_LIST=$EXPERIMENT_NAME.n
+fi
+if [ -z $SERVER_LIST ]; then
+    SERVER_LIST=$EXPERIMENT_NAME.s
+fi
+
+echo "HOST_LIST=$HOST_LIST"
+echo "SERVER_LIST=$SERVER_LIST"
+
+
+if [ $BATCH -eq 1 ]; then
+    MATCH=`echo $EXPERIMENT_NAME | tr '[A-Z]' '[a-z]'`
+    NEED_NODES=$[`wc -l $HOST_LIST | awk '{print $1}'` + `wc -l $SERVER_LIST | awk '{print $1}'`]
+    PREV_READY_NODES=0;
+    READY_NODES=`(ls ~/VMTorrent/experiments/STATUS_READY/*.$MATCH.* 2> /dev/null) | wc -w`
+    echo "waiting for $NEED_NODES nodes"
+    while [ "$READY_NODES" -lt "$NEED_NODES" ]; do
+	READY_NODES=`(ls ~/VMTorrent/experiments/STATUS_READY/*.$MATCH.* 2> /dev/null) | wc -w`
+	if [ $PREV_READY_NODES -ne $READY_NODES ]; then
+	    echo "$READY_NODES ready"
+	fi
+	sleep 1
+    done
+    #rm ~/VMTorrent/experiments/STATUS_READY/*.$MATCH.* 
+    echo "all $NEED_NODES nodes ready"
+fi
+
+#MAKE TEMPLATE
+sed -e "s/cfg_template/$EXPERIMENT_NAME/" \
+    cfg_template.cfg > $CONFIG_PATH/$EXPERIMENT_NAME.cfg 
+sed -e "s/INPUT_VMDISK/$VMDISK/" \
+    -i $CONFIG_PATH/$EXPERIMENT_NAME.cfg
+sed -e "s/INPUT_GUEST_SCRIPT/$GUEST_SCRIPT/" \
+    -i $CONFIG_PATH/$EXPERIMENT_NAME.cfg  
+sed -e "s/INPUT_DELAY/$DELAY/" \
+    -i $CONFIG_PATH/$EXPERIMENT_NAME.cfg 
+sed -e "s/INPUT_DIVERSITY_WINDOW/$DIVERSITY_WINDOW/" \
+    -i $CONFIG_PATH/$EXPERIMENT_NAME.cfg 
+sed -e "s/INPUT_BT_PROFILE_WINDOW/$BT_PROFILE_WINDOW/" \
+    -i $CONFIG_PATH/$EXPERIMENT_NAME.cfg 
+sed -e "s/INPUT_PROFILE/$PROFILE/" \
+    -i $CONFIG_PATH/$EXPERIMENT_NAME.cfg 
+sed -e "s/INPUT_TYPES/$TRIAL_TYPES/" \
+    -i $CONFIG_PATH/$EXPERIMENT_NAME.cfg 
+sed -e "s/INPUT_HOST_LIST/$HOST_LIST/" \
+    -i $CONFIG_PATH/$EXPERIMENT_NAME.cfg 
+sed -e "s/INPUT_NUM_TRIALS/$NUMTRIALS/" \
+    -i $CONFIG_PATH/$EXPERIMENT_NAME.cfg 
+sed -e "s/INPUT_SERVER_LIST/$SERVER_LIST/" \
+    -i $CONFIG_PATH/$EXPERIMENT_NAME.cfg 
+sed -e "s/INPUT_GRACE/$GRACE/" \
+    -i $CONFIG_PATH/$EXPERIMENT_NAME.cfg 
+sed -e "s/USE_RAM_DISK_HOLDER/$USE_RAM_DISK/" \
+    -i $CONFIG_PATH/$EXPERIMENT_NAME.cfg 
+
+
+#SINGLE SSHFS SERVER
+SSHFS_USER=`head -1 $SERVER_LIST | sed -e 's/:/ /g' | awk '{print $3}'`
+SSHFS_SERVER=`head -1 $SERVER_LIST | sed -e 's/:/ /g' | awk '{print $1}'`
+if [ "$SSHFS_USER" != "" ] ; then
+    echo "pssh -o $SSH_OPTS $SSHFS_SERVER -l $SSHFS_USER \"hostname --fqdn\""
+    SSHFS_SERVER=`pssh -o $SSH_OPTS $SSHFS_SERVER -l $SSHFS_USER "hostname --fqdn"`
+else
+    echo "pssh -o $SSH_OPTS $SSHFS_SERVER \"hostname --fqdn\""
+    SSHFS_SERVER=`pssh -o $SSH_OPTS $SSHFS_SERVER "hostname --fqdn"`
+fi
+
+if [ "$SSHFS_USER" != "" ] ; then
+    echo "${SSHFS_USER}@$SSHFS_SERVER" > $CONFIG_PATH/$EXPERIMENT_NAME.sshfs
+else
+    echo $SSHFS_SERVER > $CONFIG_PATH/$EXPERIMENT_NAME.sshfs
+fi
+
+#SETUP TOPOLOGY
+HOST_LIST=`cat $HOST_LIST`
+if [ "$TOPOLOGY" == "CHAIN" -o "$TOPOLOGY" == "SKIP_CHAIN"  ]; then
+    sed -e "s/CFG.peers/CFG.\$HOSTNAME.peers/" \
+	-i $CONFIG_PATH/$EXPERIMENT_NAME.cfg 
+    PREVNAME=$SSHFS_SERVER
+    PREV=$SSHFS_SERVER
+    for HOST_ENTRY in $HOST_LIST; do
+	HOST=`echo $HOST_ENTRY | sed -e 's/:/ /g' | awk '{print $1}'`
+	HOST_USER=`echo $HOST_ENTRY | sed -e 's/:/ /g' | awk '{print $3}'`
+	if [ "$HOST_USER" != "" ]; then
+	    HOST=`pssh -o $SSH_OPTS $HOST -l $HOST_USER "hostname --fqdn"`
+	else
+	    HOST=`pssh -o $SSH_OPTS $HOST "hostname --fqdn"`    
+	fi
+	HOSTNAME=`echo $HOST | sed -e 's/\./ /g' | awk '{print $1}'`
+	
+	echo "HOSTNAME=$HOSTNAME, HOST_ADDRESS=$HOST"
+
+        # SSHFS_SERVER
+	if [ "$SSHFS_USER" != "" ]; then
+	    echo "${SSHFS_USER}@$SSHFS_SERVER" > $CONFIG_PATH/$EXPERIMENT_NAME.${HOSTNAME}.sshfs
+	else
+	    echo $SSHFS_SERVER > $CONFIG_PATH/$EXPERIMENT_NAME.${HOSTNAME}.sshfs
+	fi
+
+	rm $CONFIG_PATH/$EXPERIMENT_NAME.${PREVNAME}.peers
+
+	# FORWARD LINK
+	if [ "$PREVNAME" != "$SSHFS_SERVER" ] ; then
+	    echo $HOST >> $CONFIG_PATH/$EXPERIMENT_NAME.${PREVNAME}.peers
+	fi
+	
+        # BACKWARD LINK(S)
+	echo $PREV >> $CONFIG_PATH/$EXPERIMENT_NAME.${HOSTNAME}.peers
+
+	# SKIP CHAIN LINK
+	if [ "$TOPOLOGY" == "SKIP_CHAIN" -a "$PREVNAME" != "$SSHFS_SERVER" ] ; then    
+	    echo $SSHFS_SERVER >> $CONFIG_PATH/$EXPERIMENT_NAME.${HOSTNAME}.peers
+	fi
+       	
+	PREV=$HOST; PREVNAME=$HOSTNAME
+    done
+else
+#elif [ "$TOPOLOGY" == "$MESH" ]; then
+
+    rm -f $CONFIG_PATH/$EXPERIMENT_NAME.peers
+    touch $CONFIG_PATH/$EXPERIMENT_NAME.peers
+
+    # HANDLE MULTIPLE SERVERS
+    SERVER_LIST=`cat $SERVER_LIST`
+    for SERVER_ENTRY in $SERVER_LIST; do
+	SSHFS_USER=`echo $SERVER_ENTRY | sed -e 's/:/ /g' | awk '{print $3}'`
+	SSHFS_SERVER=`echo $SERVER_ENTRY | sed -e 's/:/ /g' | awk '{print $1}'`
+	
+	if [ "$SSHFS_USER" != "" ]; then
+	    echo "pssh -o $SSH_OPTS $SSHFS_SERVER -l $SSHFS_USER \"hostname --fqdn\""
+	    SSHFS_SERVER=`pssh -o $SSH_OPTS $SSHFS_SERVER -l $SSHFS_USER "hostname --fqdn"`
+	else
+	    echo "pssh -o $SSH_OPTS $SSHFS_SERVER \"hostname --fqdn\""
+	    SSHFS_SERVER=`pssh -o $SSH_OPTS $SSHFS_SERVER "hostname --fqdn"`
+	fi
+	echo $SSHFS_SERVER >> $CONFIG_PATH/$EXPERIMENT_NAME.peers
+    done
+
+    for HOST_ENTRY in $HOST_LIST; do
+	HOST=`echo $HOST_ENTRY | sed -e 's/:/ /g' | awk '{print $1}'`
+	HOST_USER=`echo $HOST_ENTRY | sed -e 's/:/ /g' | awk '{print $3}'`
+	if [ "$HOST_USER" != "" ]; then
+	    echo "pssh -o $SSH_OPTS $HOST -l $HOST_USER \"hostname --fqdn\""
+	    HOST=`pssh -o $SSH_OPTS $HOST -l $HOST_USER "hostname --fqdn"`
+	else
+	    echo "pssh -o $SSH_OPTS $HOST \"hostname --fqdn\""
+	    HOST=`pssh -o $SSH_OPTS $HOST "hostname --fqdn"`
+	fi
+	echo $HOST >> $CONFIG_PATH/$EXPERIMENT_NAME.peers
+    done
+fi

@@ -1,0 +1,204 @@
+#!/bin/bash
+
+usage()
+{
+    echo "usage: setup_trials -s CONFIG_FILE"
+    exit 1
+}
+
+UPDATE_SCRIPTS=1
+while getopts "s" opt; do
+    case $opt in
+	s) 
+	    echo "update scripts"
+	    UPDATE_SCRIPTS=0
+	    ;;
+	h | \?)
+	    usage
+	    ;;
+  esac
+done
+shift $[$OPTIND-1]
+
+if [ $# -ne 1 ]; then
+    usage
+fi
+
+CONFIG_FILE="$1"
+
+
+IFSBAK=$IFS
+echo "CONFIG_FILE=$CONFIG_FILE"
+source $CONFIG_FILE
+display="0"
+BINDFS="FALSE"
+for TYPE in $TYPES; do
+    if [ "$TYPE" == "bindfs" ]; then
+	BINDFS="TRUE"
+    fi
+done
+echo "BINDFS=$BINDFS"
+
+echo "mkdir -p $CONTROLLER_RESULTS_DIR"
+mkdir -p $CONTROLLER_RESULTS_DIR
+
+index=0
+
+echo "TYPES=$TYPES"
+if [ "$TYPES" != "bindfs" ]; then
+    echo -e "setup_trial: setting up servers" 
+    pids=""
+    SERVER_ENTRIES=`cat $SERVER_LIST`;
+    IFS=$'\n'  
+    for i in $SERVER_ENTRIES; do
+	IFS=$IFSBAK  
+	serverentry=`echo $i | sed -e 's/:/ /g'`   
+	server=`echo $serverentry | awk '{print $1}'`
+	display=`echo $serverentry | awk '{print $2}'`
+	if [ -z "$display" ]; then
+	    display="$DEFAULT_DISPLAY"
+	fi
+	user=`echo $serverentry | awk '{print $3}'`
+	if [ -z "$user" ]; then
+	    user=`whoami`
+	fi
+	testip=`echo $server | sed -e 's/^\([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\)//'`
+	if [ -n "$testip" ] 
+	then
+	    ip=`nslookup $server | \
+		grep "Address:" | grep -v "#" | \
+		sed -e 's/^.*Address: *\([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\)$/\1/'`
+	else
+	    ip=$server
+	fi
+		
+	echo -e "setup_trial: preparing $server"
+	if [ "$UPDATE_SCRIPTS" -eq 0 ]; then
+	    (echo -e "setup_trials: prsync -azvL $CONTROLLER_BASE_DIR/scripts/host/ $user@$server:$HOST_SCRIPT_DIR"; \
+		prsync -azvL $CONTROLLER_BASE_DIR/scripts/host/ $user@$server:$HOST_SCRIPT_DIR; ) &
+	else
+	    echo "starting server $HOST_SRC_DIR $VMDISK"
+	    (pssh -o $SSH_OPTS $server -l $user 'touch /tmp/setup_trial_started'; \
+		echo -e "setup_trials: syncing $server $HOST_CONFIG_DIR"; \
+		prsync -azv $CONTROLLER_CONFIG_DIR/ $user@$server:$HOST_CONFIG_DIR; \
+		pssh -o $SSH_OPTS $server -l $user \
+		". .profile; setup $HOST_CONFIG"; \
+		echo -e "setup_trials: starting server $HOST_SRC_DIR $VMDISK"; \
+		pssh -o $SSH_OPTS $server -l $user \
+		". .profile; start_server $HOST_CONFIG"; ) &
+	fi	    
+	
+	HostEntry[index]=$i
+	Host[index]=$server
+	User[index]=$user
+	Display[index]=$display
+	IP[index]=$ip
+
+	curpid="$!"
+	pids="$pids $curpid"	# collect pids
+	PIDS[index]="$curpid"
+	let "index += 1"
+	sleep 2
+	
+	IFS=$'\n'  
+    done
+    IFS=$IFSBAK  
+fi
+
+echo -e "setup_trial: setting up regular nodes" 
+HOST_ENTRIES=`cat $HOST_LIST`;
+IFS=$'\n'  
+for i in $HOST_ENTRIES; do
+    IFS=$IFSBAK  
+    hostentry=`echo $i | sed -e 's/:/ /g'`   
+    host=`echo $hostentry | awk '{print $1}'`
+    display=`echo $hostentry | awk '{print $2}'`
+    if [ -z "$display" ]; then
+	display="$DEFAULT_DISPLAY"
+    fi
+    user=`echo $hostentry | awk '{print $3}'`
+    if [ -z "$user" ]; then
+       user=`whoami`
+    fi
+    testip=`echo $host | sed -e 's/^\([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\)//'`
+    if [ -n "$testip" ] 
+    then
+	ip=`nslookup $host | \
+	    grep "Address:" | grep -v "#" | \
+	    sed -e 's/^.*Address: *\([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\)$/\1/'`
+    else
+	ip=$host
+    fi
+
+    HostEntry[index]=$i
+    Host[index]=$host
+    User[index]=$user
+    Display[index]=$display
+    IP[index]=$ip
+
+    echo -e "setup_trial: preparing $host"
+    if [ "$UPDATE_SCRIPTS" == 0 ]; then
+	    (echo -e "setup_trials: prsync -azvL $CONTROLLER_BASE_DIR/scripts/host/ $user@$host:$HOST_SCRIPT_DIR"; \
+		prsync -azvL $CONTROLLER_BASE_DIR/scripts/host/ $user@$host:$HOST_SCRIPT_DIR; ) &
+    else
+    (pssh -o $SSH_OPTS $host -l $user 'hostname'; \
+	echo -e "setup_trials: syncing $host $HOST_CONFIG_DIR"; \
+	prsync -avq $CONTROLLER_CONFIG_DIR/ $user@$host:$HOST_CONFIG_DIR; \
+	pssh -o $SSH_OPTS $host -l $user \
+	". .profile; export DISPLAY=:$display; setup $HOST_CONFIG"; ) &    
+    fi
+    
+    curpid="$!"
+    pids="$pids $curpid"	# collect pids
+    PIDS[index]="$curpid"
+    let "index += 1"
+    sleep 6
+    
+    IFS=$'\n'  
+done
+IFS=$IFSBAK  
+max_index=$index
+
+# define exit function
+exit_timeout() {
+  echo "setup_trial: timeout. These processes are not finished:" >> $EXEC_TRIAL_LOG
+  index=0
+  for i in ${PIDS[@]} ; do
+      ps -p $i |grep -v "PID TTY      TIME CMD"  
+      if [ $? == 0 ] ; then
+      # process still alive
+          host=${Host[$index]}
+          user=${User[$index]}
+	  echo "setup_trial: EXCEEDED TIMEOUT: host" >> $EXEC_TRIAL_LOG
+	  kill $i
+      fi
+      let "index += 1"
+  done
+  BREAK=true
+}
+
+# Handler for signal USR1 for the timer
+trap exit_timeout SIGUSR1
+
+# starting timer in subshell. It sends a SIGUSR1 to parent if it timeouts.
+(sleep 1800; kill -SIGUSR1 $PID) &
+
+# record PID of timer
+TIMER_PID=$!
+
+echo -e "setup_trial: waiting for all nodes to finish preparation"
+for i in $pids; do
+    wait $i
+    rc="$?"
+    if [ "$rc" -eq 0 ]; then
+       	echo "setup_trial: node=${Host[index]} setup completed" >> $EXEC_TRIAL_LOG
+    else
+	echo "setup_trial: node=${Host[index]} setup error, PID=$i, returned=$rc" >> $EXEC_TRIAL_LOG
+    fi
+done 
+
+echo "setup_trial: TESTING SERVER ${Host[index]}" >> $EXEC_TRIAL_LOG
+ssh ${Host[0]} -l ${User[0]} "ps auwx | grep test_p2p" >> $EXEC_TRIAL_LOG
+
+echo -e "setup_trial: host preparation completed"
+kill $TIMER_PID

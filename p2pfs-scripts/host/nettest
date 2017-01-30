@@ -1,0 +1,54 @@
+#!/bin/bash
+
+#This is nettest using netperf utility
+
+#export config parameters
+if [ $# != 1 ]
+then
+	echo "usage : nettest <netserver>"
+	exit 1;
+fi 
+
+RESULTS_DIR=/tmp/nettest
+mkdir -p $RESULTS_DIR
+host=`hostname --fqdn`
+peer=$1
+
+# find netperf options to execute netperf sub-scripts
+test_types="TCP_ UDP_"
+options=""
+for typ in $test_types 
+do
+	options+=`man netperf | grep $typ`
+done
+rm -rf $RESULTS_DIR"/$host.netperf.error"
+netperf_cmd=`which netperf`
+if [ $? -ne 0 ]
+then
+	echo "nettest :  netperf executable not found for $host : adding PATH entry to .bashrc may help" >> $RESULTS_DIR"/$host.netperf.error"
+	exit 1
+fi
+
+# for peer server, gather netperf stats as specified in options field
+rm -rf $RESULTS_DIR"/"$peer".netperf"
+
+#check whether the peer has netserver process running 
+SSH_OPTS="ConnectionAttempts=5 -o ConnectTimeout=3 -o StrictHostKeyChecking=no"
+ssh -o $SSH_OPTS $peer -l `whoami` "ps ax | grep netserver | grep -v grep"		
+if [ $? -eq 0 ]; then 
+	for opt in $options
+	do
+		#execute command and log results	
+		echo "<$opt>" >> $RESULTS_DIR"/"$peer".netperf"
+               	echo "$netperf_cmd -t $opt -H $peer -v 2" >> $RESULTS_DIR"/"$peer".netperf"
+               	$netperf_cmd -t $opt -H $peer -v 2 >> $RESULTS_DIR"/"$peer".netperf"
+               	echo "</$opt>" >> $RESULTS_DIR"/"$peer".netperf"	
+		echo "" >> $RESULTS_DIR"/"$peer".netperf"
+	done
+else
+	echo "nettest : for $host netserver process was not running on peer $peer" >> $RESULTS_DIR"/$host.netperf.error"
+fi
+
+#TODO : sync logs from log dir on host to sync dir on controller node
+
+

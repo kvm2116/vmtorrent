@@ -1,0 +1,73 @@
+#!/bin/bash
+
+if [ $# -gt 2 ]; then
+    echo "usage: tunnels -k | --kill "
+    echo "usage: tunnels hostfile [offset]"
+    echo "hostfile - file of all nodes formatted as one ip:display:user per line"
+    echo "offset - to add to the display numbers"
+    echo "-k, --kill - kill all currently active tunnels"
+    exit 1;
+fi;
+index=0
+
+if [ "$1" == "--kill" -o "$1" == "--kill" ]; then
+    `ps -e | grep fNL | awk '{print $1}' | xargs kill -9`
+    exit
+fi
+if [ $# == 2 ]; then
+    index=$2
+fi
+
+echo "starting offset=$index"
+
+IFSBAK=$IFS
+
+dd if=$1 of=$1.tmp conv=lcase
+mv $1.tmp $1
+
+hostentries=`cat $1`;
+displaynum=$[1+$index]
+#rm CURRENT $1.*HOSTS
+#touch CURRENT
+IFS=$'\n';
+for i in $hostentries; do
+    IFS=$IFSBAK
+    let "index += 1"
+    hostentry=`echo $i | sed -e 's/:/ /g'`
+    host=`echo $hostentry | awk '{print $1}'`
+    echo $host >> $1.HOSTS
+    display=`echo $hostentry | awk '{print $2}'`
+    if [ -z "$display" ]; then
+	display="74"
+    fi
+    user=`echo $hostentry | awk '{print $3}'`
+    if [ -z "$user" ]; then
+       user=`whoami`
+    fi
+
+    nn=`printf %02.0f $displaynum`
+    mm=`printf %02.0f $display`
+    
+    (pssh -o StrictHostKeyChecking=no -o ConnectTimeout=1 -fNL 59$nn:localhost:59$mm $host -l $user) &
+    curpid="$!"
+    wait $curpid
+    rc="$?"
+    echo "host=$host, display=$displaynum, return=$rc"
+    if [ "$rc" -eq 0 ]
+    then
+	let "displaynum += 1"
+    fi
+    IFS=$'\n';
+done
+let "displaynum--"
+IFS=$IFSBAK
+
+#SIZES=`jot $displaynum 1`
+#for SIZE in $SIZES; do
+#    head -$SIZE CURRENT > $SIZE; 
+#    scp $SIZE $REPO/scripts/controller
+#    rm $SIZE
+#done
+
+#scp CURRENT $REPO/scripts/controller
+#rm CURRENT

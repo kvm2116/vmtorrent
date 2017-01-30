@@ -1,0 +1,269 @@
+#!/bin/bash
+
+if [ $# -lt 2 ]; then
+    echo "usage: this CONFIG_FILE TYPE [TAG]"
+    echo "  CONFIG_FILE: contains experiment parameters"
+    echo "  TYPE: experiment type (local, bindfs, sshfs, demand, profile)"
+    exit 1
+fi
+
+IFSBAK=$IFS
+
+CONFIG_FILE="$1"
+TYPE="$2"
+if [ $# -gt 2 ]; then
+    TAG="$3"
+fi
+
+source $CONFIG_FILE
+
+case "$TYPE" in
+    local|bindfs) DELAY=0 ;;
+    sshfs|demand|profile) ;; 
+    *) echo "exec_trial: unknown type"; exit 1 ;;
+esac
+
+# record own PID - EXPORT STATEMENT MAY CAUSE PROBLEMS W/ MULTINSTANCE
+export PID=$$
+export TRIAL_TIMEOUT=$TRIAL_TIMEOUT_CFG
+
+mkdir -p $CONTROLLER_RESULTS_DIR
+
+touch $EXEC_TRIAL_LOG
+tail -F $EXEC_TRIAL_LOG &
+TAIL_PID="$!"
+
+# SET TRAP
+trap 'echo "exec_trials: exec_trial killed, cleaning up" >> $EXEC_TRIAL_LOG; kill $TAIL_PID $TIMER_PID; exit 1' 1 2 15
+
+echo "exec_trial: config=$CONFIG_FILE" >> $EXEC_TRIAL_LOG
+echo "exec_trial: type=$TYPE" >> $EXEC_TRIAL_LOG
+
+MATCH=`echo $EXPERIMENT_NAME | tr '[A-Z]' '[a-z]'`
+MATCH=${MATCH%%\/*}
+rm ~/VMTorrent/experiments/STATUS_TRIAL_DONE/*.$MATCH.*
+rm ~/VMTorrent/experiments/STATUS_TRIAL_SETUP/*.$MATCH.*
+echo "exec_trial: removed STATUS_TRIAL_MARKERS FOR MATCH=$MATCH"
+
+display="0"
+setup_cmd="setup_trial_wrapper $HOST_CONFIG $TYPE $TAG"
+exec_cmd="exec_trial_wrapper $HOST_CONFIG $TYPE $TAG"
+
+if [ "$TYPE" != "bindfs" ]; then
+    echo "ls ~/VMTorrent/experiments/STATUS_BAD_SERVER/*.$MATCH.*"
+    server_bad=`(ls ~/VMTorrent/experiments/STATUS_BAD_SERVER/*.$MATCH.* 2> /dev/null) | wc -w`
+    if [ "$server_bad" -gt 0 ]; then
+	echo "exec_trial: aborting, no server" >> $EXEC_TRIAL_LOG
+	sleep 2
+	kill $TAIL_PID
+	exit 1
+    fi
+fi
+
+HOST_ENTRIES=`cat $HOST_LIST`;
+echo -e "exec_trial: HOST_ENTRIES=\n$HOST_ENTRIES" >> $EXEC_TRIAL_LOG
+
+# SAVE CONFIGURATION USED FOR THIS RUN
+cp $CONFIG_FILE $CONTROLLER_RESULTS_DIR
+cp $CONTROLLER_CONFIG_DIR/experiment/$CFG.*cfg $CONTROLLER_RESULTS_DIR
+cp $CONTROLLER_CONFIG_DIR/experiment/$CFG.*peers $CONTROLLER_RESULTS_DIR
+
+echo -n "exec_trial: sync time w/ $NTP_SERVER " >> $EXEC_TRIAL_LOG
+sudo ntpdate $NTP_SERVER &>> $EXEC_TRIAL_LOG
+
+pids=""
+index=0
+echo -e "exec_trial: collecting node information" >> $EXEC_TRIAL_LOG
+IFS=$'\n'  
+for i in $HOST_ENTRIES; do
+    IFS=$IFSBAK  
+
+    hostentry=`echo $i | sed -e 's/:/ /g'`   
+    host=`echo $hostentry | awk '{print $1}'`
+    display=`echo $hostentry | awk '{print $2}'`
+    if [ -z "$display" ]; then
+	display="$DEFAULT_DISPLAY"
+    fi
+    user=`echo $hostentry | awk '{print $3}'`
+    if [ -z "$user" ]; then
+       user=`whoami`
+    fi
+    testip=`echo $host | sed -e 's/^\([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\)//'`
+    if [ -n "$testip" ] 
+    then
+	ip=`nslookup $host | \
+	    grep "Address:" | grep -v "#" | \
+	    sed -e 's/^.*Address: *\([0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\)$/\1/'`
+    else
+	ip=$host
+    fi
+
+    host_bad=`(ls ~/VMTorrent/experiments/STATUS_BAD_DISK/$host 2> /dev/null) | wc -w`
+    if [ $host_bad -eq 1 ]; then
+	echo -e "exec_trial: bad host, skipping $host" >> $EXEC_TRIAL_LOG
+	continue
+    fi
+
+    if [ $index -ge $NUM_HOSTS ]; then
+	echo -e "exec_trial: ${index}th host, exceeded $NUM_HOSTS hosts, skipping $host" >> $EXEC_TRIAL_LOG
+	continue
+    fi
+
+    HostEntry[index]=$i
+    Host[index]=$host
+    User[index]=$user
+    Display[index]=$display
+    IP[index]=$ip
+    
+    mkdir -p $CONTROLLER_RESULTS_DIR/$host
+
+    let "index += 1"
+    IFS=$'\n'  
+done
+IFS=$IFSBAK  
+max_index=$index
+NEED_NODES=$max_index
+
+
+# define exit function
+exit_timeout() {
+  echo "exec_trial: timeout. These processes are not finished:" >> $EXEC_TRIAL_LOG
+  index=0
+  for i in ${PIDS[@]} ; do
+      ps -p $i |grep -v "PID TTY      TIME CMD"  
+      if [ $? == 0 ] ; then
+      # process still alive
+          host=${Host[$index]}
+          user=${User[$index]}
+	  echo "exec_trial: EXCEEDED TIMEOUT: $TRIAL_TIMEOUT host" >> $EXEC_TRIAL_LOG
+	  kill $i
+      fi
+      let "index += 1"
+  done
+  BREAK=true
+}
+
+# Handler for signal USR1 for the timer
+trap exit_timeout SIGUSR1
+
+# starting timer in subshell. It sends a SIGUSR1 to parent if it timeouts.
+(sleep $TRIAL_TIMEOUT; kill -SIGUSR1 $PID) &
+
+# record PID of timer
+TIMER_PID=$!
+
+
+echo -e "exec_trial: setting up trials" >> $EXEC_TRIAL_LOG
+pids=""
+index=0
+while [ "$index" -lt "$max_index" ]; do
+    host=${Host[$index]}
+    user=${User[$index]}
+    display=${Display[$index]}
+    (pssh -o $SSH_OPTS $host -l $user ". .profile; export DISPLAY=:$display; $setup_cmd;") &
+    curpid="$!"
+    pids="$pids $curpid"	# collect pids
+    #echo "$host (pid $curpid)" >> $EXEC_TRIAL_LOG
+    PIDS[index]="$curpid"
+    sleep 2
+    let "index += 1"
+done    
+
+
+# CHECK TO SEE IF DONE
+echo "exec_trial: waiting for $NEED_NODES to finish setup" >> $EXEC_TRIAL_LOG
+NUM_SETUP_NODES=`(ls ~/VMTorrent/experiments/STATUS_TRIAL_SETUP/*.$MATCH.* 2> /dev/null) | wc -w`
+counter=0
+while [ "$NUM_SETUP_NODES" -lt "$NEED_NODES" -a ! -n "$BREAK" ]; do
+    NUM_SETUP_NODES_NEW=`(ls ~/VMTorrent/experiments/STATUS_TRIAL_SETUP/*.$MATCH.* 2> /dev/null) | wc -w`
+    if [ "$NUM_SETUP_NODES_NEW" -ne "$NUM_SETUP_NODES" ]; then
+	NUM_SETUP_NODES=$NUM_SETUP_NODES_NEW
+	echo "exec_trial: $NUM_DONE_NODES setup" >> $EXEC_TRIAL_LOG
+    fi
+    sleep 1
+    let "counter += 1"
+    if [ "$counter" -gt 300 ]; then BREAK=true ; fi
+done
+rm ~/VMTorrent/experiments/STATUS_TRIAL_SETUP/*.$MATCH.* 
+
+
+echo -e "exec_trial: wait 5 seconds" >> $EXEC_TRIAL_LOG
+sleep 5
+
+echo -e "exec_trial: starting trial" >> $EXEC_TRIAL_LOG
+pids=""
+index=0
+while [ "$index" -lt "$max_index" ]; do
+    host=${Host[$index]}
+    user=${User[$index]}
+    display=${Display[$index]}
+    (qssh -o $SSH_OPTS $host -l $user ". .profile; export DISPLAY=:$display; $exec_cmd") &
+    curpid="$!"
+    pids="$pids $curpid"	# collect pids
+    #echo "$host (pid $curpid)" >> $EXEC_TRIAL_LOG
+    PIDS[index]="$curpid"
+
+    let "index += 1"
+    if [ "$index" -lt "$max_index" ]; then
+	if [ "$DELAY" -gt 0 ]; then
+	    echo -e "exec_trial: wait $DELAY seconds" >> $EXEC_TRIAL_LOG
+	    sleep $DELAY
+	else
+	    msleep 50
+	fi
+    fi
+done    
+
+index=0
+for i in $pids; do
+    host=${Host[$index]}
+    user=${User[$index]}
+    ip=${IP[$index]}
+
+    #kill -s 0 $i; 
+    #if [ "$?" -ne 0 ]; then echo "process $i not running"; fi
+    wait $i
+
+    rc="$?"
+    if [ "$rc" -eq 0 ]
+    then	
+	echo "exec_trial: host=${Host[index]} trial started" >> $EXEC_TRIAL_LOG
+    else
+	echo "exec_trial: host=${Host[index]} trial didn't start, PID=$i, returned=$rc" >> $EXEC_TRIAL_LOG
+	if [ "$rc" -ne 127 ]; then NEED_NODES=$[$NEED_NODES-1]; fi
+	echo "exec_trial: NEED_NODES=$NEED_NODES" >> $EXEC_TRIAL_LOG
+    fi
+    let "index += 1"
+done
+echo -e "exec_trial: ALL NODES STARTED" >> $EXEC_TRIAL_LOG
+
+
+# CHECK TO SEE IF DONE
+pids=""
+echo "exec_trial: waiting for $NEED_NODES to finish trial" >> $EXEC_TRIAL_LOG
+(ls ~/VMTorrent/experiments/STATUS_TRIAL_DONE/*.$MATCH.* 2> /dev/null) > $MATCH.DONE
+NUM_DONE_NODES=`(ls ~/VMTorrent/experiments/STATUS_TRIAL_DONE/*.$MATCH.* 2> /dev/null) | wc -w`
+while [ "$NUM_DONE_NODES" -lt "$NEED_NODES" -a ! -n "$BREAK" ]; do
+    NUM_DONE_NODES_NEW=`(ls ~/VMTorrent/experiments/STATUS_TRIAL_DONE/*.$MATCH.* 2> /dev/null) | wc -w`
+    if [ "$NUM_DONE_NODES_NEW" -ne "$NUM_DONE_NODES" ]; then
+	(ls ~/VMTorrent/experiments/STATUS_TRIAL_DONE/*.$MATCH.* 2> /dev/null) > $MATCH.DONE.NEW
+	NUM_DONE_NODES=$NUM_DONE_NODES_NEW
+	for i in `diff $MATCH.DONE.NEW $MATCH.DONE | awk '{print $2}'`; do 
+	    host=${i##*/}
+	    echo "host $host finished"
+	done
+	mv $MATCH.DONE.NEW $MATCH.DONE
+	echo "exec_trial: $NUM_DONE_NODES done, need $NEED_NODES" >> $EXEC_TRIAL_LOG
+    fi
+    sleep 1
+#    echo "exec_trial: $NUM_DONE_NODES done, NEED NODES $NEED_NODES" >> $EXEC_TRIAL_LOG
+done
+rm ~/VMTorrent/experiments/STATUS_TRIAL_DONE/*.$MATCH.* 
+
+#kill $pids
+echo "exec_trial: finished" >> $EXEC_TRIAL_LOG
+sleep 1
+
+# kill timer
+kill $TIMER_PID
+kill $TAIL_PID

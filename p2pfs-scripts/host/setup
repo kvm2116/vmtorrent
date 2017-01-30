@@ -1,0 +1,67 @@
+#!/bin/bash
+
+usage()
+{
+    echo "usage: setup CONFIG_FILE"
+    echo -e "\tCONFIG_FILE - contains parameters to be used in startup attempt"
+    exit;
+}
+
+
+# SCRIPT MAIN
+if [ $# -ne 1 ]; then
+    usage
+fi
+
+CONFIG_FILE="$1"
+VERB_LEVEL="-v"
+
+# LOAD THE PROFILE AND AND OWN THE DIRECTORIES
+. ~/.profile
+echo "$HOSTNAME:setup: BEGIN"
+if [ -f $CONFIG_FILE ]; then
+    source $CONFIG_FILE
+else
+    echo "NO CONFIG FILE FOUND AT $CONFIG_FILE"
+    exit 0
+fi
+
+pssh -o StrictHostKeyChecking=no ${REPO%%:*} 'echo "no op" > /dev/null' 
+
+# SYNC SCRIPTS W/ THE REPO
+echo "$HOSTNAME:setup: UPDATING $HOST_BIN_DIR FROM $REPO/$REPO_HOST_SETUP_DIR_NAME/shared/"
+prsync -azL $VERB_LEVEL --exclude=p2pfs/ $REPO/$REPO_HOST_SETUP_DIR_NAME/shared/ $HOST_BIN_DIR 
+sudo chown -R `whoami`:VMTorrent /usr/local/vmtorrent
+touch /tmp/`hostname`
+
+# SETUP THE DISK
+setup_disk $CONFIG_FILE
+
+# OWN THE LOCAL_HOST_DIR
+if [ -n $HOST_LOCAL_DIR ]; then
+    echo -e "$HOSTNAME:setup: sudo chown -R `whoami`:VMTorrent $HOST_LOCAL_DIR"
+    sudo chown -R `whoami`:VMTorrent $HOST_LOCAL_DIR
+else
+    echo -e "$HOSTNAME:setup: $HOST_LOCAL_DIR doesn't exist!"
+fi
+ 
+# SET UP VNC DISPLAY
+if [ "$VNC_RESTART" -eq 1 ]; then
+    vnc_restart $CONFIG_FILE
+fi
+
+
+# EXPORT DISPLAY
+if [ -z $DISPLAY ]; then
+    export DISPLAY=:$DEFAULT_DISPLAY
+fi
+
+
+# UPDATE THE FILES ON THE HOST
+update_host $CONFIG_FILE
+
+# BUILD THE VMTORRENT SOURCE
+echo "$HOSTNAME:setup: BUILDING VMTORRENT"
+buildVMTorrent $CONFIG_FILE
+
+echo "$HOSTNAME:setup: COMPLETE"

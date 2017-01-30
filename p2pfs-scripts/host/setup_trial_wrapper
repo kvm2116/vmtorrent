@@ -1,0 +1,29 @@
+#!/bin/bash
+SCRIPT_NAME=setup_trial_wrapper
+
+if [ $# -lt 2 ]; then
+    echo "Usage: $SCRIPT_NAME CONFIG_FILE TYPE [TAG]"
+    echo "  CONFIG_FILE: contains experiment parameters"
+    echo "  TYPE: experiment type (local, bindfs, sshfs, demand, profile)"
+    exit 1
+fi
+
+CONFIG_FILE="$1"
+TYPE="$2"
+if [ $# -gt 2 ]; then
+    TAG="$3"
+fi
+
+if [ -f $CONFIG_FILE ]; then
+    . ~/.profile
+    source $CONFIG_FILE
+else
+    time_elapsed_diff; echo -e "$ID:${SCRIPT_NAME}: NO CONFIG FILE FOUND AT $CONFIG_FILE";
+    finish_up
+    exit 1
+fi
+
+cd $HOST_BASE_DIR; 
+mkdir -p $HOST_EXEC_DIR
+
+setup_trial $@ &> $HOST_EXEC_DIR/setup_trial.log

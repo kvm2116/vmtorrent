@@ -1,0 +1,105 @@
+#!/bin/bash
+
+usage()
+{
+    echo "usage: exec_trials -s CONFIG_FILE"
+    echo "  CONFIG_FILE: contains experiment parameters"
+    echo "  -s:          skip setup"
+    echo "  -h:          help"
+    exit 1
+}
+
+SKIPSETUP=0
+while getopts "s" opt; do
+    case $opt in
+	s)
+	    echo "skipping setup"
+	    SKIPSETUP=1
+	    ;;
+	h | \?)
+	    usage
+	    ;;
+  esac
+done
+shift $[$OPTIND-1]
+
+if [ $# -ne 1 ]; then
+    usage
+fi
+
+# SET VARIABLES
+
+CONFIG_FILE="$1"
+source $CONFIG_FILE
+    
+# CHECK TYPE VALIDITY
+for TYPE in $TYPES; do
+    case "$TYPE" in
+	local|bindfs|sshfs|p2p|demand|profile) ;;
+	*) echo "exec_trials: Unknown type"; exit 1 ;;
+    esac
+done
+
+TRIALS="`seq 1 $NUMTRIALS`"
+
+rm $EXEC_TRIALS_LOG &> /dev/null
+
+# MONITOR PROGRESS
+#killall tail
+tail -F $EXEC_TRIALS_LOG &
+TAIL_PID="$!"
+
+echo "exec_trials: Experiment NAME=$EXPERIMENT_NAME" >> $EXEC_TRIALS_LOG
+
+mkdir -p $CONTROLLER_RESULTS_DIR
+
+# SETUP NODES FOR EXPERIMENT
+if [ $SKIPSETUP -ne 1 ]; then
+    echo "exec_trials: calling setup_trials" >> $EXEC_TRIALS_LOG
+    setup_trials $CONFIG_FILE &>> $EXEC_TRIALS_LOG
+    echo "exec_trials: setup_trials done" >> $EXEC_TRIALS_LOG
+fi
+
+echo "exec_trials: TRIALS=$NUMTRIALS" >> $EXEC_TRIALS_LOG
+echo "exec_trials: TYPES=$TYPES " >> $EXEC_TRIALS_LOG
+
+# SET TRAP
+trap 'echo "exec_trials: exec_trials killed, cleaning up" >> $EXEC_TRIALS_LOG; killall cat prsync rsync; cleanup_trial -c -f $CONFIG_FILE $TYPE $TYPE/$TRIAL >> $EXEC_TRIALS_LOG; kill $TAIL_PID; exit 1' 1 2 15
+
+# RUN TRIALS
+for TRIAL in $TRIALS; do
+    for TYPE in $TYPES; do
+	echo -n "--   trial=$TRIAL, type=$TYPE, start_time=" >> $EXEC_TRIALS_LOG; 
+        date --rfc-3339=seconds >> $EXEC_TRIALS_LOG
+	exec_trial $CONFIG_FILE $TYPE "$TYPE/$TRIAL" &>> $EXEC_TRIALS_LOG
+        cleanup_trial -c $CONFIG_FILE $TYPE "$TYPE/$TRIAL" >> $EXEC_TRIALS_LOG
+    done
+done
+echo "exec_trials: STATUS = all trials finished" >> $EXEC_TRIALS_LOG
+
+
+echo "exec_trials: Summary of trial results" >> $EXEC_TRIALS_LOG
+for TYPE in $TYPES; do
+    for TRIAL in $TRIALS; do	
+	pushd $CONTROLLER_RESULTS_DIR/$TYPE/$TRIAL/ &> /dev/null
+	HOSTS=`find . -type d -not -name "." | sed -e 's#\./##' | sort -k 1`
+	popd &> /dev/null
+	for HOST in $HOSTS; do
+	    if [ -f "$CONTROLLER_RESULTS_DIR/$TYPE/$TRIAL/$HOST/vm_runtime" ] ; then
+		printf "%-40s%-10s%d\t" $HOST $TYPE $TRIAL >> $EXEC_TRIALS_LOG
+		awk '{printf "%s\t", $1}' $CONTROLLER_RESULTS_DIR/$TYPE/$TRIAL/$HOST/vm_runtime >> $EXEC_TRIALS_LOG
+		if [ -f $CONTROLLER_RESULTS_DIR/$TYPE/$TRIAL/$HOST/network.delay.tab ]; then
+		    tail -1 $CONTROLLER_RESULTS_DIR/$TYPE/$TRIAL/$HOST/network.delay.tab | awk '{print $3}' >> $EXEC_TRIALS_LOG
+		else
+		    echo "" >> $EXEC_TRIALS_LOG
+		fi
+	    fi
+	done
+    done
+done
+
+
+# CLEANUP
+sleep 3
+echo "exec_trials: DONE"
+kill $TAIL_PID
