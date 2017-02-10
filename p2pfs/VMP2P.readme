@@ -223,3 +223,37 @@ New 'X' desktop is dest.ecmptestbed.flowscheduler-pg0.wisc.cloudlab.us:1
 Starting applications specified in /home/bwang/.vnc/xstartup
 Log file is /home/bwang/.vnc/dest.ecmptestbed.flowscheduler-pg0.wisc.cloudlab.us:1.log
 
+RUNNING BINDFS WITH DOCKER:
+On Source:
+1) Save the Docker image as a tar file:
+sudo docker save docker_image > docker_image.tar
+2) Make a torrent file from the tar file:
+bwang@source:/local/send_docker$ ./../vmtorrent/p2pfs/p2p/make_torrent -t foo2.torrent -f docker_image.tar
+3) Scp the torrent file to the Destination machine:
+scp foo2.torrent bwang@128.104.222.64:~/
+4) Run test_p2p so that Source can act as a seed for the tar file:
+bwang@source:/local/send_docker$ ./../vmtorrent/p2pfs/p2p/test_p2p -t foo2.torrent -l .
+
+On Destination:
+1) Make sure that Docker does not have the same pre-existing Docker image:
+Check if there is a Docker container running with the Docker image:
+sudo docker ps -a
+Delete the Docker container running it:
+sudo docker rm ContainerID
+Find the Docker image id:
+sudo docker images
+Delete the Docker image:
+sudo docker rmi ImageID
+2) Make a folder (e.g. exec_trial_docker), and make sure that it contains the torrent file and peers.txt,
+which contains the IP address of the seed.
+3) In exec_trial_docker, make 3 folders mnt disk and p2p:
+mkdir -p mnt disk p2p
+4) Create a shadow file in disk with the same size as the tar file:
+dd if=/dev/zero of=hello.tar bs=12800 count=1
+5) In exec_trial_docker/, run bindfs as a background process:
+bindfs -f --vmt-demand --vmt-logfile=hello.txt --vmt-torrent=foo2.torrent --vmt-peers=peers.txt --vmt-storage=p2p disk/ mnt/ &
+6) Load the Docker image:
+sudo docker load -i mnt/docker_image.tar
+7) Run the Docker container:
+sudo docker run hello-world
+
