@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iterator>
 #include <exception>
-
+#include <boost/filesystem.hpp>
 
 
 #include "libtorrent/entry.hpp"
@@ -17,26 +17,39 @@
 #include <map> 
 #include <list>
 #include <stdarg.h>
+#include <string>
 
 #include "p2p_interface.hpp"
 #include "p2p_wrapper.hpp"
 
+
 using namespace libtorrent;
+//using std::tr2::sys;
+using namespace std;
+using namespace boost::filesystem;
+
+bool has_suffix(const std::string &str, const std::string &suffix)
+{
+    return str.size() >= suffix.size() &&
+           str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
 
 int main(int argc, char* argv[]) {
     
-    char torrent_file[1000]; 
+    char torrent_dir[1000]; 
     char storage_dir[1000]; 
     char seed_host[1000]; 
     char peer_file[1000]; 
     char library_path[1000]; 
     char profile_file[1000]; 
+    vector<string> torrent_files;
 
     int seed_port =-1; 
     int local_port = -1; 
     int upload_limit = 0;
     int download_limit = 0;
     
+    bool torrent_dir_given = false;
     bool torrent_given = false; 
     bool directory_given = false; 
     bool seed_given = false; 
@@ -52,8 +65,8 @@ int main(int argc, char* argv[]) {
     while((opt = getopt(argc, argv, "t:l:s:p:e:u:d:ro:f:"))!=-1) {
         switch(opt) {
 	case 't':
-	    strcpy(torrent_file, optarg); 
-	    torrent_given = true; 
+	    strcpy(torrent_dir, optarg); 
+	    torrent_dir_given = true; 
 	    break;
 	    
 	case 'l':
@@ -118,11 +131,36 @@ int main(int argc, char* argv[]) {
 
     }
 
+    if (torrent_dir_given) {
+        path p (torrent_dir);
+	if (is_directory(p))
+  	{
+    	    for (directory_iterator itr(p); itr!=directory_iterator(); ++itr)
+            {
+                string fname = itr->path().filename().string();
+                cout << fname << ' '; // display filename only
+                if (is_regular_file(itr->status())) cout << " [" << file_size(itr->path()) << ']';
+                 cout << '\n';
+                if (has_suffix(fname, ".torrent")) {
+                    torrent_files.push_back(itr->path().filename().string());
+                    cout << "torrent file\n";
+                }
+            }
+        }
+    }
+
+    cout << "myvector contains:";
+    for (std::vector<string>::iterator it = torrent_files.begin() ; it != torrent_files.end(); ++it)
+        std::cout << ' ' << *it;
+    std::cout << '\n';
+
     if (!directory_given || !torrent_given) {
       std::cout << "Usage: ./p2p_test -t <.torrent file> -l <storage directory> [-u upload_limit] [-d download_limit] [-e <peer file>] [-r] [-o output_file] [-f profile] '[-p <local port to run on, default:6881>]" <<std::endl; 
       return 1;
     }
 
+    char torrent_file[1000];
+ 
     std::cout << "p2p_client with args: " <<std::endl;
     if (torrent_given)
        std::cout << "\ttorrent= " << torrent_file <<std::endl;
