@@ -37,6 +37,7 @@ bool has_suffix(const std::string &str, const std::string &suffix)
 int main(int argc, char* argv[]) {
     
     char torrent_dir[1000]; 
+    char torrent_file[1000];
     char storage_dir[1000]; 
     char seed_host[1000]; 
     char peer_file[1000]; 
@@ -65,8 +66,10 @@ int main(int argc, char* argv[]) {
     while((opt = getopt(argc, argv, "t:l:s:p:e:u:d:ro:f:"))!=-1) {
         switch(opt) {
 	case 't':
-	    strcpy(torrent_dir, optarg); 
-	    torrent_dir_given = true; 
+	    //strcpy(torrent_dir, optarg); 
+	    //torrent_dir_given = true;
+            strcpy(torrent_file, optarg); 
+	    torrent_given = true; 
 	    break;
 	    
 	case 'l':
@@ -131,6 +134,7 @@ int main(int argc, char* argv[]) {
 
     }
 
+    /*
     if (torrent_dir_given) {
         path p (torrent_dir);
 	if (is_directory(p))
@@ -143,23 +147,25 @@ int main(int argc, char* argv[]) {
                  cout << '\n';
                 if (has_suffix(fname, ".torrent")) {
                     torrent_files.push_back(itr->path().filename().string());
-                    cout << "torrent file\n";
+                    torrent_file = true;
                 }
             }
         }
     }
 
-    cout << "myvector contains:";
+    cout << "torrent files contains:";
     for (std::vector<string>::iterator it = torrent_files.begin() ; it != torrent_files.end(); ++it)
-        std::cout << ' ' << *it;
-    std::cout << '\n';
+    {
+        cout << ' ' << *it;
+    }
+    cout << '\n';
 
+    */
     if (!directory_given || !torrent_given) {
       std::cout << "Usage: ./p2p_test -t <.torrent file> -l <storage directory> [-u upload_limit] [-d download_limit] [-e <peer file>] [-r] [-o output_file] [-f profile] '[-p <local port to run on, default:6881>]" <<std::endl; 
       return 1;
     }
 
-    char torrent_file[1000];
  
     std::cout << "p2p_client with args: " <<std::endl;
     if (torrent_given)
@@ -168,6 +174,7 @@ int main(int argc, char* argv[]) {
     std::cout << "\tupload limit= " << upload_limit <<std::endl;
     std::cout << "\tdownload_limit= " << download_limit <<std::endl;
    
+    //char torrent_file[1000];
     p2p_interface *pi = new p2p_interface();
     
     //add a DHT node to another peer: this allows the client to run 
