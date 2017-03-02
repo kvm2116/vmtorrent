@@ -1,20 +1,28 @@
 #!/bin/bash
 
-if [ "$#" -ne 1 ]; then
-    echo "Usage: ./checkpoint_send directoryname interval"
+if [ "$#" -ne 2 ]; then
+    echo "Usage: ./checkpoint_send directoryname dest_ip interval"
 fi
 
 directoryname=$1
 movefolder="tomove"
 INTERVAL=5
 LAST_TIME=0
-DEST_IP=$3
-DEST_DIR=/home/bw2387/
+DEST_IP=$2
+DEST_DIR="/home/bw2387/test_scripts"
+USERNAME="bw2387"
+P2P_DIR="/home/bw2387/vmtorrent/p2pfs/p2p"
 
-echo "$directoryname"
+trap ctrl_c INT
 
-if [ "$#" -eq 2 ]; then
-    INTERVAL=$2
+# on ctrc_c, kill test_p2p processes
+function ctrl_c() {
+    pkill -9 test_p2p
+    exit 0
+}
+
+if [ "$#" -eq 3 ]; then
+    INTERVAL=$3
 fi
 
 while true; do
@@ -22,9 +30,10 @@ while true; do
     if [ $LAST_TIME -eq 0 ]; then
         cp -rf $directoryname $directoryname$movefolder
         LAST_TIME=$(date +%s)
-        echo $LAST_TIME
+        echo "first iteration"
     else
-        echo "not first time"
+        echo "next iteration"
+        LAST_TIME=$(date +%s)
         result=$(find $directoryname -newermt "-$INTERVAL seconds")
         if [[ $result ]]; then
             mkdir $directoryname$movefolder
@@ -40,16 +49,14 @@ while true; do
         # kill old test_p2p
         pkill -9 test_p2p
 
-        ./make_torrent -t $directoryname.torrent -f $directoryname$movefolder.tar.gz -s 256
-        scp $directoryname.torrent bw2387@$DEST_IP:$DEST_DIR
+        $P2P_DIR/make_torrent -t $directoryname.torrent -f $directoryname$movefolder.tar.gz -s 256
+        scp $directoryname.torrent $USERNAME@$DEST_IP:$DEST_DIR
 
-        ./test_p2p -t $directoryname.torrent -l . &
-
-        sleep $INTERVAL
-
-#        pkill -9 test_p2p
-    else
-        sleep $INTERVAL
+        $P2P_DIR/test_p2p -t $directoryname.torrent -l . &
     fi
+        
+    cur_time=$(date +%s)
+    let sleep_time="$INTERVAL-($cur_time-$LAST_TIME)"
+    sleep $sleep_time
 
 done
