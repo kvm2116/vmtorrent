@@ -40,7 +40,7 @@ while true; do
         # kill old test_p2p
         pkill -9 test_p2p
 
-        ./make_torrent -t $directoryname.torrent -f $directoryname.tar.gz -s 256
+        ./make_torrent -t $directoryname.torrent -f $directoryname$movefolder.tar.gz -s 256
         scp $directoryname.torrent bw2387@$DEST_IP:$DEST_DIR
 
         ./test_p2p -t $directoryname.torrent -l . &
