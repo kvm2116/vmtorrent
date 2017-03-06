@@ -257,3 +257,24 @@ sudo docker load -i mnt/docker_image.tar
 7) Run the Docker container:
 sudo docker run hello-world
 
+To run checkpoint_send.sh on source:
+First, make sure you have SSH keys to destination installed:
+ssh-add keyfile
+To run, execute the following command:
+bw2387@instance-1:~/test_scripts$ ./../vmtorrent/p2pfs/p2p/checkpoint_send.sh test 10.142.0.3
+In the above, the first argument test is the directory to send, the second argument is the IP address of destination (needed for scp).
+If running on Google Cloud, the IP address of destination should be its internal IP address.
+
+To run checkpoint_receive.sh on destination:
+First, make sure that there does not exist on destination, the source directory, directorytomove, and directorytomove.tar.gz.
+bw2387@instance-2:~/test_scripts$ ./../vmtorrent/p2pfs/p2p/checkpoint_receive.sh test 10.142.0.2
+In the above, the first argument test is the directory to receive (it must be the same as the file being sent from source), 
+the second argument is the IP address of source (needed for test_p2p). 
+If running on Google Cloud, the IP address of source should be its internal IP address.
+
+Basically, source checks the status of the directory every interval (the optional third argument with default 5 seconds), 
+and if it changes, it creates a new tar file, kills the running test_p2p, makes a new torrent file, and restarts it with the new tar file to serve. 
+The tar file only contains the files which have been modified or added on the top layer of the directory, and if a
+file has been added or modified in a lower directory, copies the entire lower directory.
+
+Destination checks whether the torrent file is new, and if it is, removes the old tar file, kills the old test_p2p, and restarts test_p2p. 
