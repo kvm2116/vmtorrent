@@ -37,7 +37,9 @@ while true; do
         result=$(find $directoryname -newermt "-$INTERVAL seconds")
         if [[ $result ]]; then
             mkdir $directoryname$movefolder
-            find $directoryname -newermt "-$INTERVAL seconds" | xargs cp -t $directoryname$movefolder       
+            find $directoryname -type d -mindepth 1 -newermt "-$INTERVAL seconds" | xargs cp -r -t $directoryname$movefolder
+            find $directoryname -type f -maxdepth 1 -newermt "-$INTERVAL seconds" | xargs cp -t $directoryname$movefolder
+
         fi
     fi
 
