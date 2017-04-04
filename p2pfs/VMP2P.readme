@@ -257,6 +257,9 @@ sudo docker load -i mnt/docker_image.tar
 7) Run the Docker container:
 sudo docker run hello-world
 
+------------------------------------------------------------------------------------------------------------------------
+INSTRUCTIONS ON HOW TO TRANSFER CONTAINER CHECKPOINTS:
+
 To run checkpoint_send.sh on source:
 First, make sure you have SSH keys to destination installed:
 ssh-add keyfile
