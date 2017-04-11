@@ -10,6 +10,7 @@ INTERVAL=5
 LAST_TIME=0
 SRC_IP=$2
 P2P_DIR="/home/bw2387/vmtorrent/p2pfs/p2p"
+TRIAL=1
 
 trap ctrl_c INT
 
@@ -19,8 +20,11 @@ function ctrl_c() {
     exit 0
 }
 
-if [ "$#" -eq 3 ]; then
+if [ "$#" -ge 3 ]; then
     INTERVAL=$3
+fi
+if [ "$#" -ge 4 ]; then
+    TRIAL=$4
 fi
 
 while true; do
@@ -29,14 +33,21 @@ while true; do
 	
         LAST_TIME=$(date +%s)
         echo "first iteration"
- 
+        echo "TRIAL $TRIAL" >> logtime.txt
+        echo "test p2p start: $(date +'%Y-%m-%d %H:%M:%S.%3N')" >> logtime.txt
         $P2P_DIR/test_p2p -t $directoryname.torrent -l . -s $SRC_IP &
-	while [ ! -s $directoryname$movefolder.tar.gz ]; do
-            sleep 0.1
-            echo "waiting for tar.gz"
+	
+        while [ ! -s $directoryname$movefolder.tar.gz ]; do
+            sleep 0.01
+            #echo "waiting for tar.gz"
         done
+        
+        echo "tar file received: $(date +'%Y-%m-%d %H:%M:%S.%3N')" >> logtime.txt
         if [ -s $directoryname$movefolder.tar.gz ]; then
+            
+            echo "decompress start: $(date +'%Y-%m-%d %H:%M:%S.%3N')" >> logtime.txt
             tar -xvzf $directoryname$movefolder.tar.gz
+            echo "decompress end: $(date +'%Y-%m-%d %H:%M:%S.%3N')" >> logtime.txt
             cp -a $directoryname$movefolder/. $directoryname
         fi
     else
@@ -61,6 +72,5 @@ while true; do
 
     cur_time=$(date +%s)
     let sleep_time="$INTERVAL-($cur_time-$LAST_TIME)"
-    echo $sleep_time
     sleep $sleep_time
 done
