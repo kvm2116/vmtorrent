@@ -284,3 +284,28 @@ bw2387@instance-2:~/test_scripts$ ./../vmtorrent/p2pfs/p2p/checkpoint_receive.sh
 In the above, the first argument test is the directory to receive (it must be the same as the file being sent from source), 
 the second argument is the IP address of source (needed for test_p2p). 
 If running on Google Cloud, the IP address of source should be its internal IP address.
+
+Testing:
+
+SCP all files in directory:
+SRC:
+python ../vmtorrent/p2pfs/p2p/send_scp.py checkpoint1 ~/checkpoint1 1 10.142.0.3
+python ../vmtorrent/p2pfs/p2p/send_scp.py src_directory dst_directory trial_num list_of_dst_ips
+DST:
+./vmtorrent/p2pfs/p2p/receive_scp.sh 1 checkpoint1 186461460 scp_logfile.txt
+Takes in local directory name
+Note: takes about 37 seconds to scp all files individually to a machine.
+
+SCP tar file of directory:
+SRC: 
+python ../vmtorrent/p2pfs/p2p/send_tar_scp.py checkpoint1 ~/checkpoint1_tar 1 10.142.0.3
+DST:
+./vmtorrent/p2pfs/p2p/receive_scp.sh 1 checkpoint1_tar 2129038 scp_tar_logfile.txt
+Note: takes about 0.5 seconds to send tar file for scp
+
+Using test_p2p:
+SRC:
+./../vmtorrent/p2pfs/p2p/checkpoint_send.sh checkpoint1 10.142.0.3 5 2
+DST:
+./../vmtorrent/p2pfs/p2p/checkpoint_receive.sh checkpoint1 10.142.0.2
+Note: takes about 0.5 seconds to send tar file for test_p2p
