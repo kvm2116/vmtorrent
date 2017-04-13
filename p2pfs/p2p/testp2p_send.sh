@@ -48,7 +48,7 @@ for i in "${@:4}"
 do
     scp -i $KEY $directoryname.torrent $USERNAME@$i:$DEST_DIR
 done
-        
+
 echo "test p2p start: $(date +'%Y-%m-%d %H:%M:%S.%N')" >> logtime.txt
 $P2P_DIR/test_p2p -t $directoryname.torrent -l . &
 

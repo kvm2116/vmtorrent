@@ -40,6 +40,8 @@ while [ ! -s $directoryname.torrent ]; do
     sleep 0.001
 done
 
+sleep 5
+
 echo "TRIAL $TRIAL" >> log_testp2p_$MACHINE.txt
 echo "test p2p start: $(date +'%Y-%m-%d %H:%M:%S.%3N')" >> log_testp2p_$MACHINE.txt
 $P2P_DIR/test_p2p -t $directoryname.torrent -l . -s $SRC_IP &
