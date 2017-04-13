@@ -21,8 +21,9 @@ def main():
 
 def send_all_files(ip, src_directory, dst_directory):
     address = USERNAME+'@'+ip+':'+dst_directory
-    for filename in os.listdir(src_directory):
-        subprocess.call(['scp', '-i', KEY, src_directory+'/'+filename, address])
+    #for filename in os.listdir(src_directory):
+    #    subprocess.call(['scp', '-i', KEY, src_directory+'/'+filename, address])
 
+    subprocess.call(['scp', '-r', '-i', KEY, src_directory+'/', address])
 if __name__ == "__main__":
    main()

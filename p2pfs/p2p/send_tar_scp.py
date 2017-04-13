@@ -18,7 +18,7 @@ def main():
     subprocess.call(['tar', '-cvzf', tar_name, src_directory])
     for i in range(4, num_args):
         now = datetime.now()
-        log.write("sent to machine "+str(i)+" at: "+now.strftime("%Y-%m-%d %H:%M:%S.%f")+"\n")
+        log.write("sent to machine "+str(i-3)+" at: "+now.strftime("%Y-%m-%d %H:%M:%S.%f")+"\n")
         send_tar_file(sys.argv[i], tar_name, dst_directory)
 def send_tar_file(ip, tar_name, dst_directory):
     address = USERNAME+'@'+ip+':'+dst_directory
