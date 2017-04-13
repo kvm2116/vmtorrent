@@ -3,6 +3,9 @@ DIR=$2
 SIZE=$3
 LOGFILE=$4
 
+rm -rf $DIR
+mkdir $DIR
+
 CHECK=$(du -b $DIR  | cut -f1)    
 echo "TRIAL $TRIAL" >> $LOGFILE
 
