@@ -296,6 +296,13 @@ DST:
 Takes in local directory name
 Note: takes about 37 seconds to scp all files individually to a machine.
 
+SCP directory recursively:
+SRC:
+python ../vmtorrent/p2pfs/p2p/send_scp.py checkpoint1 ~/ 2 10.142.0.3
+DST:
+./vmtorrent/p2pfs/p2p/receive_scp.sh 2 checkpoint1 186461460 scp_logfile.txt
+Note: it takes 2.5 seconds to scp directory recursively.
+
 SCP tar file of directory:
 SRC: 
 python ../vmtorrent/p2pfs/p2p/send_tar_scp.py checkpoint1 ~/checkpoint1_tar 1 10.142.0.3
@@ -309,3 +316,5 @@ SRC:
 DST:
 ./../vmtorrent/p2pfs/p2p/checkpoint_receive.sh checkpoint1 10.142.0.2
 Note: takes about 0.5 seconds to send tar file for test_p2p
+
+
