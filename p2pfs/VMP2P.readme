@@ -300,21 +300,21 @@ SCP directory recursively:
 SRC:
 python ../vmtorrent/p2pfs/p2p/send_scp.py checkpoint1 ~/ 2 10.142.0.3
 DST:
-./vmtorrent/p2pfs/p2p/receive_scp.sh 2 checkpoint1 186461460 scp_logfile.txt
+./vmtorrent/p2pfs/p2p/receive_scp.sh 2 checkpoint1 186460983 scp_logfile_1.txt
 Note: it takes 2.5 seconds to scp directory recursively.
 
 SCP tar file of directory:
 SRC: 
 python ../vmtorrent/p2pfs/p2p/send_tar_scp.py checkpoint1 ~/checkpoint1_tar 1 10.142.0.3
 DST:
-./vmtorrent/p2pfs/p2p/receive_scp.sh 1 checkpoint1_tar 2129038 scp_tar_logfile.txt
+./vmtorrent/p2pfs/p2p/receive_scp.sh 1 checkpoint1_tar 2131939 scp_tar_logfile_1.txt
 Note: takes about 0.5 seconds to send tar file for scp
 
 Using test_p2p:
 SRC:
-./../vmtorrent/p2pfs/p2p/checkpoint_send.sh checkpoint1 10.142.0.3 5 2
+./../vmtorrent/p2pfs/p2p/testp2p_send.sh checkpoint1 5 TRIALNUM 10.142.0.4 10.142.0.5
 DST:
 ./../vmtorrent/p2pfs/p2p/checkpoint_receive.sh checkpoint1 10.142.0.2
 Note: takes about 0.5 seconds to send tar file for test_p2p
 
-
+./../vmtorrent/p2pfs/p2p/testp2p_receive.sh checkpoint1 10.142.0.2 5 TRIALNUM MACHINENUM
