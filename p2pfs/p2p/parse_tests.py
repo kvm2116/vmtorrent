@@ -1,10 +1,12 @@
 import numpy as np
 from datetime import datetime
+import matplotlib.pyplot as plt
 
-def test_p2p_parse(num_trials, num_nodes):
-    
-    src = open('logtime.txt', 'r+')
-    
+def test_p2p_parse(num_trials, num_nodes, total_results):
+
+    total_results['avg_nodes'].append([0]*num_nodes)
+
+    src = open('logtime.txt', 'r+')    
     results = []
     trial = 1
     for line in src:
@@ -89,6 +91,16 @@ def test_p2p_parse(num_trials, num_nodes):
         print "download time for all nodes: " + str(trial['total_download'])
         total_test_p2p.append(trial['total_download'])
 
+    total_results['avg_download_time'].append(np.mean(total_test_p2p))
+    total_results['std_download_time'].append(np.std(total_test_p2p))
+    total_results['avg_trials'].append(test_p2p_download)
+
+    for node in range(0, num_nodes):
+        times = []
+        for trial in range(0, num_trials):
+            times.append(results[trial]['test_p2p_diff'][node])
+        total_results['avg_nodes'][0][node] = np.mean(times)
+        
     print "TOTALS"
     print "average compression time: " + str(np.mean(compression_times))
     print "std compression time: " + str(np.std(compression_times))
@@ -100,7 +112,9 @@ def test_p2p_parse(num_trials, num_nodes):
     print "std total download time: " + str(np.std(total_test_p2p))
     
 
-def scp_file(mode, num_trials, num_nodes):
+def scp_file(mode, num_trials, num_nodes, total_results):
+    total_results['avg_nodes'].append([0]*10)
+
     if mode == 'tar':
         src_name = 'scp_tar_logtime.txt'
     else:
@@ -146,31 +160,141 @@ def scp_file(mode, num_trials, num_nodes):
 
     avg_node_recv = []
     total_time = []
+    node_recv = []
     for t in range (0, num_trials):
-        node_recv = []
+        node_recv.append([0]*num_nodes)
         print "trial"
         for n in range (0, num_nodes):
-            node_recv.append((received_times[t][n] - sent_times[t][n]).total_seconds())
-            print "scp node download time: "+str(node_recv[n])
-        avg_node_recv.append(np.mean(node_recv))
+            node_recv[t][n] =(received_times[t][n] - sent_times[t][n]).total_seconds()
+            print "scp node download time: "+str(node_recv[t][n])
+        avg_node_recv.append(np.mean(node_recv[t]))
         print "trial average scp node download time: "+str(avg_node_recv[t])
         print "trail std scp node download time: "+str(np.std(node_recv))
         total_diff = (max(received_times[t])-min(sent_times[t])).total_seconds()
         print "trial total download time: "+str(total_diff)
         total_time.append(total_diff)
    
+    
+    total_results['avg_trials'].append(avg_node_recv)
+    total_results['avg_download_time'].append(np.mean(total_time))
+    total_results['std_download_time'].append(np.std(total_time))
+
+    for node in range(0, num_nodes):
+        times = []
+        for trial in range(0, num_trials):
+            times.append(node_recv[trial][node])
+        if mode=='tar':
+            index = 2
+        else:
+            index = 1
+        total_results['avg_nodes'][index][node] = np.mean(times)
+ 
     print "TOTALS"
     print "average scp node download time: "+str(np.mean(avg_node_recv))
     print "average total download time: "+str(np.mean(total_time))
     print "std total download time: "+str(np.std(total_time)) 
 
+def autolabel(ax, rects):
+    """
+    Attach a text label above each bar displaying its height
+    """
+    for rect in rects:
+        height = rect.get_height()
+        ax.text(rect.get_x() + rect.get_width()/2., 1.05*height,
+                '%f' % height,
+                ha='center', va='bottom')
+
 def main():
+    num_trials = 5
+    num_nodes = 10
+    total_results = {}
+    total_results['avg_download_time'] = []
+    total_results['std_download_time'] = []
+    total_results['avg_trials'] = []
+    total_results['avg_nodes'] = []
     print "TEST P2P TRIALS"
-    test_p2p_parse(5, 10)
+    test_p2p_parse(num_trials, num_nodes, total_results)
     print "SCP RECURSIVE TRIALS"
-    scp_file('recursive', 5, 10)
+    scp_file('recursive', num_trials, num_nodes, total_results)
     print "SCP TAR TRIALS"
-    scp_file('tar', 5, 10)
+    scp_file('tar', num_trials, num_nodes, total_results)
+
+    print total_results
+
+    avg_time_trial_graph(total_results, num_trials)
+    avg_time_graph(total_results)
+    avg_time_node_graph(total_results, num_nodes)
+
+def avg_time_graph(total_results):
+    ind = np.arange(3)  # the x locations for the groups
+    width = 0.35       # the width of the bars
+
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(ind, total_results['avg_download_time'], width, color='r', yerr=total_results['std_download_time'])
+    
+    # add some text for labels, title and axes ticks
+    ax.set_ylabel('Seconds')
+    ax.set_title('Total download times for 10 nodes')
+    ax.set_xticks(ind + width / 2)
+    ax.set_xticklabels(('Test_P2P', 'SCP REC', 'SCP TAR'))
+
+    autolabel(ax, rects1)
+
+    plt.savefig('avg_download_times.png')
+
+def avg_time_trial_graph(total_results, num_trials):
+    ind = np.arange(num_trials)  # the x locations for the groups
+    width = 0.15       # the width of the bars
+
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(ind, total_results['avg_trials'][0], width, color='r')
+    
+    rects2 = ax.bar(ind+width, total_results['avg_trials'][1], width, color='b')
+    
+
+    rects3 = ax.bar(ind+2*width, total_results['avg_trials'][2], width, color='g')
+    
+    # add some text for labels, title and axes ticks
+    ax.set_ylabel('Seconds')
+    ax.set_title('Average download time per trial')
+    ax.set_xticks(ind + 2*width / 2)
+    ax.set_xticklabels(('T1', 'T2', 'T3', 'T4', 'T5'))
+
+    #autolabel(ax, rects1)
+    #autolabel(ax, rects2)
+    #autolabel(ax, rects3)
+
+    ax.legend((rects1[0], rects2[0], rects3[0]), ('Test P2P', 'SCP Rec', 'SCP Tar'))
+
+    plt.savefig('avg_time_trials.png')
+
+def avg_time_node_graph(total_results, num_nodes):
+    ind = np.arange(num_nodes)  # the x locations for the groups
+    width = 0.1       # the width of the bars
+
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(ind, total_results['avg_nodes'][0], width, color='r')
+    
+    rects2 = ax.bar(ind+width, total_results['avg_nodes'][1], width, color='b')
+    
+
+    rects3 = ax.bar(ind+2*width, total_results['avg_nodes'][2], width, color='g')
+    
+    # add some text for labels, title and axes ticks
+    ax.set_ylabel('Seconds')
+    ax.set_title('Average download time per node')
+    ax.set_xticks(ind + 2*width / 2)
+    ax.set_xticklabels(('N1', 'N2', 'N3', 'N4', 'N5', 'N6', 'N7', 'N8', 'N9', 'N10'))
+
+    #autolabel(ax, rects1)
+    #autolabel(ax, rects2)
+    #autolabel(ax, rects3)
+
+    ax.legend((rects1[0], rects2[0], rects3[0]), ('Test P2P', 'SCP Rec', 'SCP Tar'))
+
+    plt.savefig('avg_time_node.png')
+
+
 
 if __name__ == "__main__":
    main()
