@@ -13,7 +13,7 @@ for element in "${array[@]}"
 do
     echo "$element";
     scp -i $KEY $USER@$element:~/\{scp_logfile_$MACHINE_NUM.txt,scp_tar_logfile_$MACHINE_NUM.txt,test_scripts/log_testp2p_$MACHINE_NUM.txt\} test_data_$EXP_NUM;
-    MACHINE_NUM=$MACHINE_NUM+1
+    let "MACHINE_NUM=MACHINE_NUM+1"
 done
 
 echo "RUNNING on SRC"

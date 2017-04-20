@@ -12,7 +12,7 @@ for element in "${array[@]}"
 do
     echo "$element"
     ssh -i $KEY -f $USER@$element "sh -c 'rm scp_logfile_$MACHINE_NUM.txt scp_tar_logfile_$MACHINE_NUM.txt; cd test_scripts; rm log_testp2p_$MACHINE_NUM.txt'"
-    MACHINE_NUM=$MACHINE_NUM+1
+    let "MACHINE_NUM=MACHINE_NUM+1"
 done
 
 echo "RUNNING on SRC"

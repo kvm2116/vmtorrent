@@ -21,7 +21,7 @@ do
     then
         ssh -i $KEY -f $USER@$element "sh -c 'nohup ./vmtorrent/p2pfs/p2p/receive_scp.sh $TRIAL checkpoint1 186460983 scp_logfile_$MACHINE_NUM.txt > receive_rev.out 2> receive_rev.err < /dev/null &'"
     fi
-    MACHINE_NUM=$MACHINE_NUM+1
+    let "MACHINE_NUM=MACHINE_NUM+1"
 done
 
 echo "RUNNING on SRC"
