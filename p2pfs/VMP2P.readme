@@ -322,3 +322,9 @@ Note: takes about 0.5 seconds to send tar file for test_p2p
 LEVELDB:
 Install lib:
 sudo apt-get install libleveldb-dev
+
+LevelDB documentation:
+https://github.com/google/leveldb/blob/master/doc/index.md
+https://github.com/dazfuller/LevelDB-Sample/
+http://mathlab.utsc.utoronto.ca/courses/cscd43w17/csc443clean/tutorials/leveldb.html
+http://codeofrob.com/entries/basic-operations-with-leveldb.html
