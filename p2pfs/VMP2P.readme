@@ -328,3 +328,10 @@ https://github.com/google/leveldb/blob/master/doc/index.md
 https://github.com/dazfuller/LevelDB-Sample/
 http://mathlab.utsc.utoronto.ca/courses/cscd43w17/csc443clean/tutorials/leveldb.html
 http://codeofrob.com/entries/basic-operations-with-leveldb.html
+
+VERBOSE LOGGING:
+To add verbose logging, in the ./configure step of compiling libtorrent, do:
+./configure --enable-export-all=yes --with-boost=`pwd`/../boost/install \
+CXXFLAGS="-g -O2 -DTORRENT_STATS=1 -DTORRENT_DISK_STATS=1 -DTORRENT_VERBOSE_LOGGING" \
+CFLAGS="-g -O2 -DTORRENT_STATS=1 -DTORRENT_DISK_STATS=1 -DTORRENT_VERBOSE_LOGGING"
+
