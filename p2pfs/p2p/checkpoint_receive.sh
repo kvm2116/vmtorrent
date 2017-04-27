@@ -27,6 +27,10 @@ if [ "$#" -ge 4 ]; then
     TRIAL=$4
 fi
 
+rm -rf $directoryname
+rm -rf $directoryname$movefolder
+rm $directoryname$movefolder.tar.gz
+
 while true; do
     
     if [ $LAST_TIME -eq 0 ]; then
