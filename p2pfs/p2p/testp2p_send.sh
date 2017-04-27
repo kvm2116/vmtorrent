@@ -13,6 +13,7 @@ DEST_DIR="/home/bw2387/test_scripts"
 USERNAME="bw2387"
 P2P_DIR="/home/bw2387/vmtorrent/p2pfs/p2p"
 KEY="/home/bw2387/.ssh/vmtorrent_key"
+PEERFILE="/home/bw2387/peers.txt"
 TRIAL=1
 MACHINE="src"
 trap ctrl_c INT
@@ -50,7 +51,7 @@ do
 done
 
 echo "test p2p start: $(date +'%Y-%m-%d %H:%M:%S.%N')" >> logtime.txt
-$P2P_DIR/test_p2p -t $directoryname.torrent -l . &
+$P2P_DIR/test_p2p -t $directoryname.torrent -e $PEERFILE -l . &
 
 while true; do
     echo "still waiting"
