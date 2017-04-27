@@ -16,7 +16,7 @@ def main():
     log.write("TRIAL "+trial_num+"\n")
     for i in range(4, num_args):
         now = datetime.now()
-        log.write("sent to machine "+str(i)+" at: "+now.strftime("%Y-%m-%d %H:%M:%S.%f")+"\n")
+        log.write("sent to machine "+str(i-3)+" at: "+now.strftime("%Y-%m-%d %H:%M:%S.%f")+"\n")
         send_all_files(sys.argv[i], src_directory, dst_directory)
 
 def send_all_files(ip, src_directory, dst_directory):

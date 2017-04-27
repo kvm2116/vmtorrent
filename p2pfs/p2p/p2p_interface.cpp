@@ -19,6 +19,8 @@
 
 #include "p2p_interface.hpp"
 
+#include "leveldb/db.h"
+
 using namespace libtorrent;
 bool compact_mode = false;
 bool downloading = true;
@@ -206,13 +208,37 @@ int p2p_interface::start_torrent(const char *torrent_file, const char *dir, int 
     start_torrent_(torrent_file, dir, -1, -1, demand, upload_limit, download_limit);
 }
 
+int add_hashes_db() {
+	leveldb::DB* db;
+	leveldb::Options options;
+	options.create_if_missing = true;
+	leveldb::Status status = leveldb::DB::Open(options, "/tmp/testdb", &db);
+	if (status.ok()) {
+		leveldb::Slice key = "T1";
+		leveldb::Slice value = "H1";
+		db->Put(leveldb::WriteOptions(), key, value);
+
+		std::string value_read;
+		db->Get(leveldb::ReadOptions(), key, &value_read);
+		std::cout << value_read << std::endl;
+		
+		return 1;
+	}
+	if (!status.ok()) std::cerr << status.ToString() << std::endl;
+	return 0;
+}
+
+
+
+
 int p2p_interface::start_torrent_(const char *torrent_file, const char *dir, int min_port, int max_port, int demand, int upload_limit, int download_limit) {
     if (min_port == -1) min_port = DEFAULT_MIN_PORT;
     if (max_port == -1) max_port = DEFAULT_MAX_PORT;
     	
     P2P_OUT << "start" 
 	    << P2P_ENDL;
-    
+   
+	add_hashes_db(); 
     int nice = getpriority (PRIO_PROCESS, 0);
     P2P_OUT << "nice=" << nice
 	    << P2P_ENDL;

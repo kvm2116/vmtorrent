@@ -26,6 +26,8 @@ BOOST_PYTHON_LIB =
 BOOST_REGEX_LIB = -lboost_regex
 BOOST_SYSTEM_LIB = -lboost_system
 BOOST_THREAD_LIB = -lboost_thread
+LEVELDB_LIBS = -lleveldb -lsnappy -lpthread
+
 #BOOST_FILESYSTEM_LIB = -lboost_filesystem-gcc41-1_34_1
 #BOOST_LDFLAGS = -L$(boost_install_dir)/lib
 #BOOST_PROGRAM_OPTIONS_LIB = -lboost_program_options-gcc41-1_34_1
@@ -77,8 +79,8 @@ test_blaster: test_blaster.o $(P2P_OBJ)
 	$(CXXLINKSIMPLE) -o $@ $^ $(get_vm_LDADD) $(LIBS)
 
 test_p2p: test_p2p.o $(P2P_OBJ)
-	$(CXXLINKSIMPLE) -o $@ $^ $(get_vm_LDADD) $(LIBS)
-
+	$(CXXLINKSIMPLE) -o $@ $^ $(get_vm_LDADD) $(LIBS) $(LEVELDB_LIBS)
+ 
 profile_reader: profile_reader.o $(P2P_OBJ)
 	$(CXXLINKSIMPLE) -o $@ $^ $(get_vm_LDADD) $(LIBS)
 
