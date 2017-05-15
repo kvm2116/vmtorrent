@@ -67,7 +67,8 @@ def test_p2p_parse(num_trials, num_nodes, total_results):
 
         trial['d_difference'] = []
         trial['test_p2p_diff'] = []
-        trial['total_download'] = (max(trial['tar_file_recv']) - min(trial['dst_p2p_start'])).total_seconds()
+        print trial
+        trial['total_download'] = (max(trial['tar_file_recv']) - trial['tp2p_start']).total_seconds()
 
         for node in range(0, num_nodes):
             diff_dst = float((trial['tar_file_recv'][node] - trial['dst_p2p_start'][node]).total_seconds())
@@ -87,7 +88,7 @@ def test_p2p_parse(num_trials, num_nodes, total_results):
         trial['test_p2p_avg'] = np.mean(trial['test_p2p_diff'])
         test_p2p_download.append(trial['test_p2p_avg'])
         print "trial test p2p average: " + str(trial['test_p2p_avg'])
-        print "trial test p2p stdev: " + str(np.std(trial['test_p2p_avg']))
+        print "trial test p2p stdev: " + str(np.std(trial['test_p2p_diff']))
         print "download time for all nodes: " + str(trial['total_download'])
         total_test_p2p.append(trial['total_download'])
 
@@ -113,7 +114,9 @@ def test_p2p_parse(num_trials, num_nodes, total_results):
     
 
 def scp_file(mode, num_trials, num_nodes, total_results):
-    total_results['avg_nodes'].append([0]*10)
+    p2p_time = 2
+    num_success = 0
+    total_results['avg_nodes'].append([0]*20)
 
     if mode == 'tar':
         src_name = 'scp_tar_logtime.txt'
@@ -155,7 +158,8 @@ def scp_file(mode, num_trials, num_nodes, total_results):
             if line.startswith('entire folder received'):
                 node = i - 1
                 received_times[trial-1][node] = datetime.strptime(line.rstrip('\n').split('received: ')[1], "%Y-%m-%d %H:%M:%S.%f")
-            
+                if (received_times[trial-1][node]-sent_times[trial-1][0]).total_seconds() < p2p_time:
+                    num_success +=1
   #  print received_times
 
     avg_node_recv = []
@@ -184,15 +188,14 @@ def scp_file(mode, num_trials, num_nodes, total_results):
         for trial in range(0, num_trials):
             times.append(node_recv[trial][node])
         if mode=='tar':
-            index = 2
-        else:
             index = 1
         total_results['avg_nodes'][index][node] = np.mean(times)
  
     print "TOTALS"
     print "average scp node download time: "+str(np.mean(avg_node_recv))
     print "average total download time: "+str(np.mean(total_time))
-    print "std total download time: "+str(np.std(total_time)) 
+    print "std total download time: "+str(np.std(total_time))
+    print "Nodes downloaded successfully: "+str(num_success/num_trials)
 
 def autolabel(ax, rects):
     """
@@ -206,7 +209,7 @@ def autolabel(ax, rects):
 
 def main():
     num_trials = 5
-    num_nodes = 10
+    num_nodes = 20
     total_results = {}
     total_results['avg_download_time'] = []
     total_results['std_download_time'] = []
@@ -214,8 +217,8 @@ def main():
     total_results['avg_nodes'] = []
     print "TEST P2P TRIALS"
     test_p2p_parse(num_trials, num_nodes, total_results)
-    print "SCP RECURSIVE TRIALS"
-    scp_file('recursive', num_trials, num_nodes, total_results)
+    #print "SCP RECURSIVE TRIALS"
+    #scp_file('recursive', num_trials, num_nodes, total_results)
     print "SCP TAR TRIALS"
     scp_file('tar', num_trials, num_nodes, total_results)
 
@@ -226,18 +229,18 @@ def main():
     avg_time_node_graph(total_results, num_nodes)
 
 def avg_time_graph(total_results):
-    ind = np.arange(3)  # the x locations for the groups
-    width = 0.35       # the width of the bars
+    ind = np.arange(2)  # the x locations for the groups
+    width = 0.45       # the width of the bars
 
     fig, ax = plt.subplots()
     rects1 = ax.bar(ind, total_results['avg_download_time'], width, color='r', yerr=total_results['std_download_time'])
     
     # add some text for labels, title and axes ticks
     ax.set_ylabel('Seconds')
-    ax.set_title('Total download times for 10 nodes')
+    ax.set_title('Total download times for 20 nodes')
     ax.set_xticks(ind + width / 2)
-    ax.set_xticklabels(('Test_P2P', 'SCP REC', 'SCP TAR'))
-
+    ax.set_xticklabels(('Test_P2P', 'SCP TAR'))
+    ax.set_ylim([0, max(total_results['avg_download_time'])+20])
     autolabel(ax, rects1)
 
     plt.savefig('avg_download_times.png')
@@ -252,7 +255,7 @@ def avg_time_trial_graph(total_results, num_trials):
     rects2 = ax.bar(ind+width, total_results['avg_trials'][1], width, color='b')
     
 
-    rects3 = ax.bar(ind+2*width, total_results['avg_trials'][2], width, color='g')
+    #rects3 = ax.bar(ind+2*width, total_results['avg_trials'][2], width, color='g')
     
     # add some text for labels, title and axes ticks
     ax.set_ylabel('Seconds')
@@ -264,7 +267,7 @@ def avg_time_trial_graph(total_results, num_trials):
     #autolabel(ax, rects2)
     #autolabel(ax, rects3)
 
-    ax.legend((rects1[0], rects2[0], rects3[0]), ('Test P2P', 'SCP Rec', 'SCP Tar'))
+    ax.legend((rects1[0], rects2[0]), ('Test P2P', 'SCP Tar'))
 
     plt.savefig('avg_time_trials.png')
 
@@ -278,19 +281,24 @@ def avg_time_node_graph(total_results, num_nodes):
     rects2 = ax.bar(ind+width, total_results['avg_nodes'][1], width, color='b')
     
 
-    rects3 = ax.bar(ind+2*width, total_results['avg_nodes'][2], width, color='g')
+    #rects3 = ax.bar(ind+2*width, total_results['avg_nodes'][2], width, color='g')
     
     # add some text for labels, title and axes ticks
     ax.set_ylabel('Seconds')
     ax.set_title('Average download time per node')
     ax.set_xticks(ind + 2*width / 2)
-    ax.set_xticklabels(('N1', 'N2', 'N3', 'N4', 'N5', 'N6', 'N7', 'N8', 'N9', 'N10'))
+    ticks = []
+    for i in range(0, num_nodes):
+	ticks.append('N'+str(i+1))
+    ax.set_xticklabels(ticks)
 
+    for tick in ax.xaxis.get_major_ticks():
+        tick.label.set_fontsize(10) 
     #autolabel(ax, rects1)
     #autolabel(ax, rects2)
     #autolabel(ax, rects3)
 
-    ax.legend((rects1[0], rects2[0], rects3[0]), ('Test P2P', 'SCP Rec', 'SCP Tar'))
+    ax.legend((rects1[0], rects2[0]), ('Test P2P', 'SCP Tar'), loc=2)
 
     plt.savefig('avg_time_node.png')
 
