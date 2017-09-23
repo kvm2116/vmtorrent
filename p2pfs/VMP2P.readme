@@ -28,6 +28,8 @@ CFLAGS="-g -O2 -DTORRENT_STATS=1 -DTORRENT_DISK_STATS=1"
 make
 cd ..
 cd p2p
+make p2p_wrapper.o
+make p2p_interface.o
 make
 cd ..
 ./configure
