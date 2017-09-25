@@ -30,6 +30,13 @@ cd ..
 cd p2p
 make p2p_wrapper.o
 make p2p_interface.o
+git clone https://github.com/google/leveldb.git
+cd leveldb/
+make
+sudo scp out-static/lib* out-shared/lib* /usr/local/lib/
+cd include/
+sudo scp -r leveldb /usr/local/include/
+sudo ldconfig
 make
 cd ..
 ./configure
