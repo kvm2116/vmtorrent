@@ -26,7 +26,7 @@ BOOST_PYTHON_LIB =
 BOOST_REGEX_LIB = -lboost_regex
 BOOST_SYSTEM_LIB = -lboost_system
 BOOST_THREAD_LIB = -lboost_thread
-LEVELDB_LIBS = -lleveldb -lsnappy -lpthread
+#LEVELDB_LIBS = -lleveldb -lsnappy -lpthread
 
 #BOOST_FILESYSTEM_LIB = -lboost_filesystem-gcc41-1_34_1
 #BOOST_LDFLAGS = -L$(boost_install_dir)/lib

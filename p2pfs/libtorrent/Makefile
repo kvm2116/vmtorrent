@@ -105,8 +105,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_boost_base.m4 \
 	$(top_srcdir)/m4/gettext-lib.m4 $(top_srcdir)/m4/iconv.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
 	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
-	$(top_srcdir)/m4/lt~obsolete.m4 $(top_srcdir)/m4/pkgconfig.m4 \
-	$(top_srcdir)/configure.ac
+	$(top_srcdir)/m4/pkgconfig.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
@@ -242,16 +241,16 @@ distuninstallcheck_listfiles = find . -type f -print
 am__distuninstallcheck_listfiles = $(distuninstallcheck_listfiles) \
   | sed 's|^\./|$(prefix)/|' | grep -v '$(infodir)/dir$$'
 distcleancheck_listfiles = find . -type f -print
-ACLOCAL = ${SHELL} /home/bwang/vmtorrent/p2pfs/libtorrent/build-aux/missing aclocal-1.14
+ACLOCAL = ${SHELL} /users/mkunal/vmtorrent/p2pfs/libtorrent/build-aux/missing aclocal-1.14
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 0
 AR = ar
-AUTOCONF = ${SHELL} /home/bwang/vmtorrent/p2pfs/libtorrent/build-aux/missing autoconf
-AUTOHEADER = ${SHELL} /home/bwang/vmtorrent/p2pfs/libtorrent/build-aux/missing autoheader
-AUTOMAKE = ${SHELL} /home/bwang/vmtorrent/p2pfs/libtorrent/build-aux/missing automake-1.14
+AUTOCONF = ${SHELL} /users/mkunal/vmtorrent/p2pfs/libtorrent/build-aux/missing autoconf
+AUTOHEADER = ${SHELL} /users/mkunal/vmtorrent/p2pfs/libtorrent/build-aux/missing autoheader
+AUTOMAKE = ${SHELL} /users/mkunal/vmtorrent/p2pfs/libtorrent/build-aux/missing automake-1.14
 AWK = mawk
-BOOST_CPPFLAGS = -I/home/bwang/vmtorrent/p2pfs/libtorrent/../boost/install/include
-BOOST_LDFLAGS = -L/home/bwang/vmtorrent/p2pfs/libtorrent/../boost/install/lib
+BOOST_CPPFLAGS = -I/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include
+BOOST_LDFLAGS = -L/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/lib
 BOOST_PYTHON_LIB = 
 BOOST_SYSTEM_LIB = -lboost_system
 CC = gcc
@@ -259,7 +258,7 @@ CCDEPMODE = depmode=gcc3
 CFLAGS = -pthread -g -O2 -DTORRENT_STATS=1 -DTORRENT_DISK_STATS=1
 COMPILETIME_OPTIONS =  -DTORRENT_USE_OPENSSL  -DWITH_SHIPPED_GEOIP_H  -DBOOST_ASIO_HASH_MAP_BUCKETS=1021  -DBOOST_EXCEPTION_DISABLE  -DBOOST_ASIO_ENABLE_CANCELIO  -DBOOST_ASIO_DYN_LINK -DTORRENT_LINKING_SHARED 
 CPP = gcc -E
-CPPFLAGS = -I/home/bwang/vmtorrent/p2pfs/libtorrent/../boost/install/include 
+CPPFLAGS = -I/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include 
 CXX = g++
 CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
@@ -288,7 +287,7 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 INTERFACE_VERSION_INFO = 8:0:0
 LD = /usr/bin/ld -m elf_x86_64
-LDFLAGS = -L/home/bwang/vmtorrent/p2pfs/libtorrent/../boost/install/lib 
+LDFLAGS = -L/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/lib 
 LIBICONV = -liconv
 LIBOBJS = 
 LIBS = -lpthread  
@@ -297,7 +296,7 @@ LIPO =
 LN_S = ln -s
 LTLIBICONV = -liconv
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /home/bwang/vmtorrent/p2pfs/libtorrent/build-aux/missing makeinfo
+MAKEINFO = ${SHELL} /users/mkunal/vmtorrent/p2pfs/libtorrent/build-aux/missing makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /bin/mkdir -p
 NM = /usr/bin/nm -B
@@ -337,10 +336,10 @@ SET_MAKE =
 SHELL = /bin/bash
 STRIP = strip
 VERSION = 1.0.5
-abs_builddir = /home/bwang/vmtorrent/p2pfs/libtorrent
-abs_srcdir = /home/bwang/vmtorrent/p2pfs/libtorrent
-abs_top_builddir = /home/bwang/vmtorrent/p2pfs/libtorrent
-abs_top_srcdir = /home/bwang/vmtorrent/p2pfs/libtorrent
+abs_builddir = /users/mkunal/vmtorrent/p2pfs/libtorrent
+abs_srcdir = /users/mkunal/vmtorrent/p2pfs/libtorrent
+abs_top_builddir = /users/mkunal/vmtorrent/p2pfs/libtorrent
+abs_top_srcdir = /users/mkunal/vmtorrent/p2pfs/libtorrent
 ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_CXX = g++
@@ -371,7 +370,7 @@ host_vendor = unknown
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/bwang/vmtorrent/p2pfs/libtorrent/build-aux/install-sh
+install_sh = ${SHELL} /users/mkunal/vmtorrent/p2pfs/libtorrent/build-aux/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale

@@ -22,10 +22,10 @@ libraries =  --with-date_time --with-filesystem --with-program_options --with-re
 
 # These settings are equivivalent to corresponding command-line
 # options.
-option.set prefix : /home/bwang/vmtorrent/p2pfs/boost/install ;
-option.set exec-prefix : /home/bwang/vmtorrent/p2pfs/boost/install ;
-option.set libdir : /home/bwang/vmtorrent/p2pfs/boost/install/lib ;
-option.set includedir : /home/bwang/vmtorrent/p2pfs/boost/install/include ;
+option.set prefix : /users/mkunal/vmtorrent/p2pfs/boost/install ;
+option.set exec-prefix : /users/mkunal/vmtorrent/p2pfs/boost/install ;
+option.set libdir : /users/mkunal/vmtorrent/p2pfs/boost/install/lib ;
+option.set includedir : /users/mkunal/vmtorrent/p2pfs/boost/install/include ;
 
 # Stop on first error
 option.set keep-going : false ;
