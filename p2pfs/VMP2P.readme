@@ -37,6 +37,7 @@ sudo scp out-static/lib* out-shared/lib* /usr/local/lib/
 cd include/
 sudo scp -r leveldb /usr/local/include/
 sudo ldconfig
+cd ../../
 make
 cd ..
 ./configure
