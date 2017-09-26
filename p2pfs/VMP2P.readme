@@ -30,6 +30,7 @@ cd ..
 cd p2p
 make p2p_wrapper.o
 make p2p_interface.o
+-----
 git clone https://github.com/google/leveldb.git
 cd leveldb/
 make
@@ -38,6 +39,7 @@ cd include/
 sudo scp -r leveldb /usr/local/include/
 sudo ldconfig
 cd ../../
+-----
 make
 cd ..
 ./configure
