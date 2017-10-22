@@ -26,7 +26,7 @@ BOOST_PYTHON_LIB =
 BOOST_REGEX_LIB = -lboost_regex
 BOOST_SYSTEM_LIB = -lboost_system
 BOOST_THREAD_LIB = -lboost_thread
-#LEVELDB_LIBS = -lleveldb -lsnappy -lpthread
+LEVELDB_LIBS = -lleveldb -lsnappy -lpthread
 
 #BOOST_FILESYSTEM_LIB = -lboost_filesystem-gcc41-1_34_1
 #BOOST_LDFLAGS = -L$(boost_install_dir)/lib
@@ -76,22 +76,22 @@ $(P2P_OBJ): $(P2P_DEP)
 
 test_blaster: test_blaster.o $(P2P_OBJ)
 	echo $(LD_LIBRARY_PATH)
-	$(CXXLINKSIMPLE) -o $@ $^ $(get_vm_LDADD) $(LIBS)
+	$(CXXLINKSIMPLE) -o $@ $^ $(get_vm_LDADD) $(LIBS) $(LEVELDB_LIBS)
 
 test_p2p: test_p2p.o $(P2P_OBJ)
 	$(CXXLINKSIMPLE) -o $@ $^ $(get_vm_LDADD) $(LIBS) $(LEVELDB_LIBS)
  
 profile_reader: profile_reader.o $(P2P_OBJ)
-	$(CXXLINKSIMPLE) -o $@ $^ $(get_vm_LDADD) $(LIBS)
+	$(CXXLINKSIMPLE) -o $@ $^ $(get_vm_LDADD) $(LIBS) $(LEVELDB_LIBS)
 
 make_torrent: make_torrent.o $(P2P_OBJ)
-	$(CXXLINKSIMPLE) -o $@ $^ $(get_vm_LDADD) $(LIBS)
+	$(CXXLINKSIMPLE) -o $@ $^ $(get_vm_LDADD) $(LIBS) $(LEVELDB_LIBS)
 
 read_allblocks: read_allblocks.o $(P2P_OBJ)
-	$(CXXLINKSIMPLE) -o $@ $^ $(get_vm_LDADD) $(LIBS)
+	$(CXXLINKSIMPLE) -o $@ $^ $(get_vm_LDADD) $(LIBS) $(LEVELDB_LIBS)
 
 .cpp.o:
-	$(CXXCOMPILE)  -c -o $@ $<
+	$(CXXCOMPILE)  -c -o $@ $< 
 
 clean:
 	rm -rf *.o test_blaster test_p2p profile_reader make_torrent read_allblocks

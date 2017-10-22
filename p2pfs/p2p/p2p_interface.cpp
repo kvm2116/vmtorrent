@@ -19,7 +19,7 @@
 
 #include "p2p_interface.hpp"
 
-//#include "leveldb/db.h"
+#include "leveldb/include/leveldb/db.h"
 
 using namespace libtorrent;
 bool compact_mode = false;
@@ -207,7 +207,7 @@ int p2p_interface::start_torrent(const char *torrent_file, const char *dir, int 
 int p2p_interface::start_torrent(const char *torrent_file, const char *dir, int demand, int upload_limit, int download_limit) {
     start_torrent_(torrent_file, dir, -1, -1, demand, upload_limit, download_limit);
 }
-/*
+
 int add_hashes_db() {
 	leveldb::DB* db;
 	leveldb::Options options;
@@ -228,7 +228,7 @@ int add_hashes_db() {
 	return 0;
 }
 
-*/
+
 
 
 int p2p_interface::start_torrent_(const char *torrent_file, const char *dir, int min_port, int max_port, int demand, int upload_limit, int download_limit) {

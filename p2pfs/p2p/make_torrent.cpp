@@ -48,6 +48,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/bind.hpp>
+#include "leveldb/db.h"
+#include "leveldb/options.h"
 
 using namespace boost::filesystem;
 using namespace libtorrent;
@@ -98,16 +100,19 @@ int main(int argc, char* argv[])
 		while((opt = getopt(argc, argv, "t:f:r:u:s:p"))!=-1) {
 		    switch(opt) {
 		    case 't':
+			std::cout << optarg;
 			torrent_file = complete(path(optarg)); 
 			torrent_path_given = true; 
 			break;
 			
 		     case 'f':
+			 std::cout << optarg;
 			full_path = complete(path(optarg)); 
 			file_path_given = true; 
 			break;
  
 		    case 'r':
+			 std::cout << optarg;
 			strcpy(tracker_str, optarg);
 			tracker_given = true; 
 			break;
@@ -118,6 +123,7 @@ int main(int argc, char* argv[])
 			break;
 
 		    case 's':
+			 std::cout <<"s: "<< optarg;
 			piece_size = atoi(optarg)*1024;
 			break;
 
@@ -146,19 +152,19 @@ int main(int argc, char* argv[])
 			std::cerr << "no files specified." << std::cerr;
 			return 1;
 		}
-
+		std::cout<<"Piece size is: "<<piece_size;
 		create_torrent t(fs, piece_size);
 		if (tracker_given) { 
 		    t.add_tracker(tracker_str);
 		}
 
 		t.set_priv(priv); // apply private setting
-
+		std::cout<<full_path.branch_path().string();
 		set_piece_hashes(t, full_path.branch_path().string()
 			, boost::bind(&print_progress, _1, t.num_pieces()));
 		std::cerr << std::endl;
+		std::cout<<std::endl<<"Creator str: "<<creator_str;
 		t.set_creator(creator_str);
-
 		if (url_seed_given) t.add_url_seed(url_seed);
 
 		// create the torrent and print it to out

@@ -159,7 +159,7 @@ namespace libtorrent
 #if TORRENT_USE_WSTRING
 	void set_piece_hashes(create_torrent& t, std::wstring const& p
 		, boost::function<void(int)> const& f, error_code& ec)
-	{
+	{ std::cout<<"one";
 		file_pool fp;
 		std::string utf8;
 		wchar_utf8(p, utf8);
@@ -192,7 +192,7 @@ namespace libtorrent
 
 	void set_piece_hashes(create_torrent& t, std::string const& p
 		, boost::function<void(int)> f, error_code& ec)
-	{
+	{ std::cout<<"two";
 		file_pool fp;
 #if TORRENT_USE_UNC_PATHS
 		std::string path = canonicalize_path(p);
@@ -258,6 +258,7 @@ namespace libtorrent
 
 			hasher h(buf.bytes(), t.piece_size(i));
 			t.set_hash(i, h.final());
+			std::cout << std::endl<<i<<" : "<<h.final()<<std::endl;
 			f(i);
 		}
 	}
@@ -553,7 +554,8 @@ namespace libtorrent
 			m_merkle_tree.resize(num_nodes);
 			int num_pieces = m_piece_hash.size();
 			for (int i = 0; i < num_pieces; ++i)
-				m_merkle_tree[first_leaf + i] = m_piece_hash[i];
+				{m_merkle_tree[first_leaf + i] = m_piece_hash[i];
+				std::cout<<std::endl<<m_piece_hash[i];}
 			sha1_hash filler(0);
 			for (int i = num_pieces; i < num_leafs; ++i)
 				m_merkle_tree[first_leaf + i] = filler;
@@ -587,6 +589,7 @@ namespace libtorrent
 				i != m_piece_hash.end(); ++i)
 			{
 				p.append((char*)i->begin(), sha1_hash::size);
+				std::cout<<"tt  "<<p[-1];
 			}
 		}
 
@@ -616,6 +619,7 @@ namespace libtorrent
 		TORRENT_ASSERT(index >= 0);
 		TORRENT_ASSERT(index < (int)m_piece_hash.size());
 		m_piece_hash[index] = h;
+		std::cout<<std::endl<<m_piece_hash[index];
 	}
 
 	void create_torrent::set_file_hash(int index, sha1_hash const& h)
