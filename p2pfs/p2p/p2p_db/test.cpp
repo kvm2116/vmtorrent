@@ -3,11 +3,14 @@
 
 int main(int argc, char** argv)
 {
-insert_hash("hi", "bye",1, 3);
-leveldb_inst * temp;
-temp = get_torrent_path("hi");
-if (temp) {
-    std::cout << temp->file_path << " " << temp->offset<<" "<<temp->tot_bytes<<std::endl;
-    }
+std::string a = "heeey";
+insert_hash("hey", &a);
+//leveldb_inst * temp;
+
+std:: string temp = get_torrent_path("hi");
+    std::cout << temp<<std::endl;
+
+ temp = get_torrent_path("hey");
+    std::cout << temp<<std::endl;
 }
 
