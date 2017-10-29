@@ -17,7 +17,7 @@ old_library='libtorrent-rasterbar.a'
 inherited_linker_flags=''
 
 # Libraries that this one depends upon.
-dependency_libs=' -L/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/lib -lboost_system -lssl -lcrypto -lpthread'
+dependency_libs=' -L/local/vmtorrent/p2pfs/libtorrent/../boost/install/lib -lboost_system -lssl -lcrypto -lpthread'
 
 # Names of additional weak libraries provided by this library
 weak_library_names=''

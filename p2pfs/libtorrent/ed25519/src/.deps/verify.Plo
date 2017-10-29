@@ -1,9 +1,11 @@
 ../ed25519/src/verify.lo: ../ed25519/src/verify.cpp \
  /usr/include/stdc-predef.h ../include/libtorrent/ed25519.hpp \
  ../include/libtorrent/export.hpp \
- /users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/select_compiler_config.hpp \
- /users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/compiler/gcc.hpp \
- /usr/include/c++/4.8/cstddef \
+ /usr/include/boost/config/select_compiler_config.hpp \
+ /usr/include/boost/config/compiler/gcc.hpp \
+ /usr/include/boost/config/select_platform_config.hpp \
+ /usr/include/boost/config/platform/linux.hpp \
+ /usr/include/c++/4.8/cstdlib \
  /usr/include/x86_64-linux-gnu/c++/4.8/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/4.8/bits/os_defines.h \
  /usr/include/features.h /usr/include/x86_64-linux-gnu/sys/cdefs.h \
@@ -11,10 +13,7 @@
  /usr/include/x86_64-linux-gnu/gnu/stubs.h \
  /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
  /usr/include/x86_64-linux-gnu/c++/4.8/bits/cpu_defines.h \
- /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stddef.h \
- /users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/select_platform_config.hpp \
- /users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/platform/linux.hpp \
- /usr/include/c++/4.8/cstdlib /usr/include/stdlib.h \
+ /usr/include/stdlib.h /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stddef.h \
  /usr/include/x86_64-linux-gnu/bits/waitflags.h \
  /usr/include/x86_64-linux-gnu/bits/waitstatus.h /usr/include/endian.h \
  /usr/include/x86_64-linux-gnu/bits/endian.h \
@@ -33,18 +32,21 @@
  /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h \
  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
  /usr/include/x86_64-linux-gnu/bits/stdlib.h \
- /users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/posix_features.hpp \
- /usr/include/unistd.h /usr/include/x86_64-linux-gnu/bits/posix_opt.h \
+ /usr/include/boost/config/posix_features.hpp /usr/include/unistd.h \
+ /usr/include/x86_64-linux-gnu/bits/posix_opt.h \
  /usr/include/x86_64-linux-gnu/bits/environments.h \
  /usr/include/x86_64-linux-gnu/bits/confname.h /usr/include/getopt.h \
  /usr/include/x86_64-linux-gnu/bits/unistd.h ../ed25519/src/sha512.h \
- ../ed25519/src/fixedint.h \
- /users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/cstdint.hpp \
- /users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config.hpp \
- /users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/user.hpp \
- /users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/select_stdlib_config.hpp \
- /users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/stdlib/libstdcpp3.hpp \
- /users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/suffix.hpp \
+ ../ed25519/src/fixedint.h /usr/include/boost/cstdint.hpp \
+ /usr/include/boost/config.hpp /usr/include/boost/config/user.hpp \
+ /usr/include/boost/config/select_stdlib_config.hpp \
+ /usr/include/c++/4.8/cstddef \
+ /usr/include/boost/config/no_tr1/utility.hpp \
+ /usr/include/c++/4.8/utility /usr/include/c++/4.8/bits/stl_relops.h \
+ /usr/include/c++/4.8/bits/stl_pair.h /usr/include/c++/4.8/bits/move.h \
+ /usr/include/c++/4.8/bits/concept_check.h \
+ /usr/include/boost/config/stdlib/libstdcpp3.hpp \
+ /usr/include/boost/config/suffix.hpp \
  /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/wchar.h ../ed25519/src/ge.h \
  ../ed25519/src/fe.h ../ed25519/src/sc.h
@@ -55,11 +57,15 @@
 
 ../include/libtorrent/export.hpp:
 
-/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/select_compiler_config.hpp:
+/usr/include/boost/config/select_compiler_config.hpp:
 
-/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/compiler/gcc.hpp:
+/usr/include/boost/config/compiler/gcc.hpp:
 
-/usr/include/c++/4.8/cstddef:
+/usr/include/boost/config/select_platform_config.hpp:
+
+/usr/include/boost/config/platform/linux.hpp:
+
+/usr/include/c++/4.8/cstdlib:
 
 /usr/include/x86_64-linux-gnu/c++/4.8/bits/c++config.h:
 
@@ -77,15 +83,9 @@
 
 /usr/include/x86_64-linux-gnu/c++/4.8/bits/cpu_defines.h:
 
-/usr/lib/gcc/x86_64-linux-gnu/4.8/include/stddef.h:
-
-/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/select_platform_config.hpp:
-
-/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/platform/linux.hpp:
-
-/usr/include/c++/4.8/cstdlib:
-
 /usr/include/stdlib.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/4.8/include/stddef.h:
 
 /usr/include/x86_64-linux-gnu/bits/waitflags.h:
 
@@ -131,7 +131,7 @@
 
 /usr/include/x86_64-linux-gnu/bits/stdlib.h:
 
-/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/posix_features.hpp:
+/usr/include/boost/config/posix_features.hpp:
 
 /usr/include/unistd.h:
 
@@ -149,17 +149,31 @@
 
 ../ed25519/src/fixedint.h:
 
-/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/cstdint.hpp:
+/usr/include/boost/cstdint.hpp:
 
-/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config.hpp:
+/usr/include/boost/config.hpp:
 
-/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/user.hpp:
+/usr/include/boost/config/user.hpp:
 
-/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/select_stdlib_config.hpp:
+/usr/include/boost/config/select_stdlib_config.hpp:
 
-/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/stdlib/libstdcpp3.hpp:
+/usr/include/c++/4.8/cstddef:
 
-/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/suffix.hpp:
+/usr/include/boost/config/no_tr1/utility.hpp:
+
+/usr/include/c++/4.8/utility:
+
+/usr/include/c++/4.8/bits/stl_relops.h:
+
+/usr/include/c++/4.8/bits/stl_pair.h:
+
+/usr/include/c++/4.8/bits/move.h:
+
+/usr/include/c++/4.8/bits/concept_check.h:
+
+/usr/include/boost/config/stdlib/libstdcpp3.hpp:
+
+/usr/include/boost/config/suffix.hpp:
 
 /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stdint.h:
 

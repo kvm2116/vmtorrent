@@ -19,14 +19,39 @@ bool insert_hash(std::string hash, std::string *block ) {
     {
         std::cerr << "Unable to open/create test database './torrent_db'" << std::endl;
         std::cerr << status.ToString() << std::endl;
-        return -1;
+        return false;
     }
     
     leveldb::WriteOptions writeOptions;
     db->Put(writeOptions, hash, *block);
     
     delete db;
+    return true;
 
+}
+
+bool update_keys(std::string key1, std::string key2) {
+
+    std::string value;
+
+    leveldb::DB* db;
+    leveldb::Options options;
+    options.create_if_missing = true;
+
+    leveldb::Status status = leveldb::DB::Open(options, "./torrent_db", &db);
+
+    leveldb::Status s = db->Get(leveldb::ReadOptions(), key1, &value);
+    if (s.ok()) {
+        leveldb::WriteBatch batch;
+  	batch.Delete(key1);
+  	batch.Put("hii", value);
+  	s = db->Write(leveldb::WriteOptions(), &batch);
+        delete db;
+	return true;
+    }
+    
+    delete db;
+    return false;
 }
 
 std::string get_torrent_path(std::string hash) {

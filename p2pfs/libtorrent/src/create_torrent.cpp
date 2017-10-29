@@ -223,6 +223,7 @@ namespace libtorrent
 			// read hits the disk and will block. Progress should
 			// be updated in between reads
 			st->read(buf.bytes(), i, 0, t.piece_size(i));
+			//std::cout<<std::endl<<buf.bytes()<<std::endl;
 			if (st->error())
 			{
 				ec = st->error();
@@ -257,8 +258,11 @@ namespace libtorrent
 			}
 
 			hasher h(buf.bytes(), t.piece_size(i));
-			t.set_hash(i, h.final());
-			std::cout << std::endl<<i<<" : "<<h.final()<<std::endl;
+			sha1_hash hash_ldb = h.final();
+			// Insert into leveldb here
+			t.set_hash(i, hash_ldb);
+			//insert_hash(hash_ldb, buf.bytes());
+			std::cout << std::endl<<i<<" : "<<hash_ldb<<std::endl;
 			f(i);
 		}
 	}
@@ -365,7 +369,7 @@ namespace libtorrent
 	}
 
 	entry create_torrent::generate() const
-	{
+	{       std::cout<<"\n Inside generate \n";
 		TORRENT_ASSERT(m_files.piece_length() > 0);
 
 		entry dict;
@@ -584,13 +588,24 @@ namespace libtorrent
 		else
 		{
 			std::string& p = info["pieces"].string();
-
+			//std::cout<<std::endl<<m_piece_hash[0]<<std::endl;
 			for (std::vector<sha1_hash>::const_iterator i = m_piece_hash.begin();
 				i != m_piece_hash.end(); ++i)
 			{
 				p.append((char*)i->begin(), sha1_hash::size);
-				std::cout<<"tt  "<<p[-1];
+				//std::cout<<"tt  "<<p[-1];
 			}
+			// Update leveldb here
+			std::cout<<p.size()<<std::endl;
+			for (size_t i = 0; i < p.size(); i += 20)
+    				std::cout << p.substr(i, 20)<<std::endl;
+			
+			for (int i = 0; i <  m_piece_hash.size(); i++) {
+				std::cout << p.substr(i*20, 20)<<std::endl;    
+				std::cout<<std::endl<<m_piece_hash[i]<<std::endl;
+				update_keys(p.substr(i*20, 20), m_piece_hash[i]);
+			}
+			
 		}
 
 		std::vector<char> buf;
@@ -619,7 +634,7 @@ namespace libtorrent
 		TORRENT_ASSERT(index >= 0);
 		TORRENT_ASSERT(index < (int)m_piece_hash.size());
 		m_piece_hash[index] = h;
-		std::cout<<std::endl<<m_piece_hash[index];
+		std::cout<<std::endl<<index<<" "<<m_piece_hash[index];
 	}
 
 	void create_torrent::set_file_hash(int index, sha1_hash const& h)

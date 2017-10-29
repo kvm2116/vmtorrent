@@ -1,9 +1,11 @@
 ../ed25519/src/seed.lo: ../ed25519/src/seed.cpp \
  /usr/include/stdc-predef.h ../include/libtorrent/ed25519.hpp \
  ../include/libtorrent/export.hpp \
- /users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/select_compiler_config.hpp \
- /users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/compiler/gcc.hpp \
- /usr/include/c++/4.8/cstddef \
+ /usr/include/boost/config/select_compiler_config.hpp \
+ /usr/include/boost/config/compiler/gcc.hpp \
+ /usr/include/boost/config/select_platform_config.hpp \
+ /usr/include/boost/config/platform/linux.hpp \
+ /usr/include/c++/4.8/cstdlib \
  /usr/include/x86_64-linux-gnu/c++/4.8/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/4.8/bits/os_defines.h \
  /usr/include/features.h /usr/include/x86_64-linux-gnu/sys/cdefs.h \
@@ -11,10 +13,7 @@
  /usr/include/x86_64-linux-gnu/gnu/stubs.h \
  /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
  /usr/include/x86_64-linux-gnu/c++/4.8/bits/cpu_defines.h \
- /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stddef.h \
- /users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/select_platform_config.hpp \
- /users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/platform/linux.hpp \
- /usr/include/c++/4.8/cstdlib /usr/include/stdlib.h \
+ /usr/include/stdlib.h /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stddef.h \
  /usr/include/x86_64-linux-gnu/bits/waitflags.h \
  /usr/include/x86_64-linux-gnu/bits/waitstatus.h /usr/include/endian.h \
  /usr/include/x86_64-linux-gnu/bits/endian.h \
@@ -33,8 +32,8 @@
  /usr/include/x86_64-linux-gnu/bits/stdlib-bsearch.h \
  /usr/include/x86_64-linux-gnu/bits/stdlib-float.h \
  /usr/include/x86_64-linux-gnu/bits/stdlib.h \
- /users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/posix_features.hpp \
- /usr/include/unistd.h /usr/include/x86_64-linux-gnu/bits/posix_opt.h \
+ /usr/include/boost/config/posix_features.hpp /usr/include/unistd.h \
+ /usr/include/x86_64-linux-gnu/bits/posix_opt.h \
  /usr/include/x86_64-linux-gnu/bits/environments.h \
  /usr/include/x86_64-linux-gnu/bits/confname.h /usr/include/getopt.h \
  /usr/include/x86_64-linux-gnu/bits/unistd.h /usr/include/stdio.h \
@@ -51,11 +50,15 @@
 
 ../include/libtorrent/export.hpp:
 
-/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/select_compiler_config.hpp:
+/usr/include/boost/config/select_compiler_config.hpp:
 
-/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/compiler/gcc.hpp:
+/usr/include/boost/config/compiler/gcc.hpp:
 
-/usr/include/c++/4.8/cstddef:
+/usr/include/boost/config/select_platform_config.hpp:
+
+/usr/include/boost/config/platform/linux.hpp:
+
+/usr/include/c++/4.8/cstdlib:
 
 /usr/include/x86_64-linux-gnu/c++/4.8/bits/c++config.h:
 
@@ -73,15 +76,9 @@
 
 /usr/include/x86_64-linux-gnu/c++/4.8/bits/cpu_defines.h:
 
-/usr/lib/gcc/x86_64-linux-gnu/4.8/include/stddef.h:
-
-/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/select_platform_config.hpp:
-
-/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/platform/linux.hpp:
-
-/usr/include/c++/4.8/cstdlib:
-
 /usr/include/stdlib.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/4.8/include/stddef.h:
 
 /usr/include/x86_64-linux-gnu/bits/waitflags.h:
 
@@ -127,7 +124,7 @@
 
 /usr/include/x86_64-linux-gnu/bits/stdlib.h:
 
-/users/mkunal/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/config/posix_features.hpp:
+/usr/include/boost/config/posix_features.hpp:
 
 /usr/include/unistd.h:
 
