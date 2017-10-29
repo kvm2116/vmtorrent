@@ -603,7 +603,7 @@ namespace libtorrent
 			for (int i = 0; i <  m_piece_hash.size(); i++) {
 				std::cout << p.substr(i*20, 20)<<std::endl;    
 				std::cout<<std::endl<<m_piece_hash[i]<<std::endl;
-				update_keys(p.substr(i*20, 20), m_piece_hash[i]);
+				//update_keys(p.substr(i*20, 20), m_piece_hash[i]);
 			}
 			
 		}
