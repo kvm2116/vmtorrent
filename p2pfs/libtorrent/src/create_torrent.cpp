@@ -41,7 +41,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <sys/types.h>
 #include <sys/stat.h>
-
+#include "../../p2p/p2p_db/p2p_leveldb.hpp"
 #define MAX_SYMLINK_PATH 200
 
 namespace libtorrent
@@ -261,8 +261,12 @@ namespace libtorrent
 			sha1_hash hash_ldb = h.final();
 			// Insert into leveldb here
 			t.set_hash(i, hash_ldb);
-			//insert_hash(hash_ldb, buf.bytes());
-			std::cout << std::endl<<i<<" : "<<hash_ldb<<std::endl;
+			std::stringstream ss;
+                        ss << hash_ldb;
+			std::string string_hash = ss.str();
+			std::string buff_bytes = std::string(buf.bytes());
+			//insert_hash(string_hash, &buff_bytes);
+			std::cout << std::endl<<i<<" : "<<hash_ldb<<"  "<<string_hash<<std::endl;
 			f(i);
 		}
 	}
@@ -603,7 +607,10 @@ namespace libtorrent
 			for (int i = 0; i <  m_piece_hash.size(); i++) {
 				std::cout << p.substr(i*20, 20)<<std::endl;    
 				std::cout<<std::endl<<m_piece_hash[i]<<std::endl;
-				//update_keys(p.substr(i*20, 20), m_piece_hash[i]);
+				std::stringstream ss;
+                        	ss << m_piece_hash[i];
+                        	std::string string_hash = ss.str();
+				//update_keys(p.substr(i*20, 20), string_hash);
 			}
 			
 		}
