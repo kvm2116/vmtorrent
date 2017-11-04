@@ -822,7 +822,7 @@ create_torrent.lo: create_torrent.cpp /usr/include/stdc-predef.h \
  /local/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/type_traits/has_plus_assign.hpp \
  /local/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/type_traits/has_minus.hpp \
  /local/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/type_traits/has_minus_assign.hpp \
- ../../p2p/p2p_db/p2p_leveldb.hpp /usr/local/include/leveldb/db.h \
+ ../include/libtorrent/p2p_leveldb.hpp /usr/local/include/leveldb/db.h \
  /usr/local/include/leveldb/export.h \
  /usr/local/include/leveldb/iterator.h /usr/local/include/leveldb/slice.h \
  /usr/local/include/leveldb/status.h /usr/local/include/leveldb/options.h \
@@ -2606,7 +2606,7 @@ create_torrent.lo: create_torrent.cpp /usr/include/stdc-predef.h \
 
 /local/vmtorrent/p2pfs/libtorrent/../boost/install/include/boost/type_traits/has_minus_assign.hpp:
 
-../../p2p/p2p_db/p2p_leveldb.hpp:
+../include/libtorrent/p2p_leveldb.hpp:
 
 /usr/local/include/leveldb/db.h:
 

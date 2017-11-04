@@ -422,8 +422,8 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-install-exec-local:
 uninstall-local:
+install-exec-local:
 clean-local:
 clean: clean-am
 

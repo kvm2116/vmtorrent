@@ -41,7 +41,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "../../p2p/p2p_db/p2p_leveldb.hpp"
+#include "libtorrent/p2p_leveldb.hpp"
 #define MAX_SYMLINK_PATH 200
 
 namespace libtorrent
@@ -219,11 +219,13 @@ namespace libtorrent
 		int num = t.num_pieces();
 		piece_holder buf(t.piece_length());
 		for (int i = 0; i < num; ++i)
-		{
+		{       
+                        piece_holder buf_2_db(t.piece_length());
 			// read hits the disk and will block. Progress should
 			// be updated in between reads
 			st->read(buf.bytes(), i, 0, t.piece_size(i));
-			//std::cout<<std::endl<<buf.bytes()<<std::endl;
+			st->read(buf_2_db.bytes(), i, 0, t.piece_size(i));
+			//std::cout<<std::endl<<buf2.bytes()<<"-----"<<t.piece_size(i)<<std::endl;
 			if (st->error())
 			{
 				ec = st->error();
@@ -264,8 +266,8 @@ namespace libtorrent
 			std::stringstream ss;
                         ss << hash_ldb;
 			std::string string_hash = ss.str();
-			std::string buff_bytes = std::string(buf.bytes());
-			//insert_hash(string_hash, &buff_bytes);
+			std::string buff_bytes = std::string(buf_2_db.bytes());
+			insert_hash(string_hash, &buff_bytes);
 			std::cout << std::endl<<i<<" : "<<hash_ldb<<"  "<<string_hash<<std::endl;
 			f(i);
 		}
@@ -610,8 +612,9 @@ namespace libtorrent
 				std::stringstream ss;
                         	ss << m_piece_hash[i];
                         	std::string string_hash = ss.str();
-				//update_keys(p.substr(i*20, 20), string_hash);
+				update_keys( string_hash,p.substr(i*20, 20));
 			}
+			print_all();
 			
 		}
 

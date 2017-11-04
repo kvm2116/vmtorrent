@@ -5,6 +5,7 @@
 
 #include "leveldb/db.h"
 #include "leveldb/write_batch.h"
+void print_all();
 /*
 typedef struct leveldb_inst_ {
         std::string file_path;

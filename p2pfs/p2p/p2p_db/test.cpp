@@ -18,6 +18,7 @@ if (b){
     std::cout << temp<<std::endl;
 }
 
+print_all();
 
 }
 

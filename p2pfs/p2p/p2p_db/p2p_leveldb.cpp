@@ -75,14 +75,40 @@ std::string get_torrent_path(std::string hash) {
     
 }
 
-/*
-int main(){
 
-insert_hash("hi", "bye",1, 3);
-leveldb_inst * temp;
-temp = get_torrent_path("hi");
-if (temp) {
-    std::cout << temp->file_path << " " << temp->offset<<" "<<temp->tot_bytes<<std::endl;
+void print_all()
+{
+    // Set up database connection information and open database
+    leveldb::DB* db;
+    leveldb::Options options;
+    options.create_if_missing = true;
+
+    leveldb::Status status = leveldb::DB::Open(options, "./torrent_db", &db);
+
+    if (false == status.ok())
+    {
+        std::cerr << "Unable to open/create test database './torrent_db'" << std::endl;
+        std::cerr << status.ToString() << std::endl;
+        return ;
     }
+    
+    // Iterate over each item in the database and print them
+    leveldb::Iterator* it = db->NewIterator(leveldb::ReadOptions());
+    
+    for (it->SeekToFirst(); it->Valid(); it->Next())
+    {
+        std::cout << it->key().ToString() << " : " << it->value().ToString() << std::endl;
+    }
+    
+    if (false == it->status().ok())
+    {
+        std::cerr << "An error was found during the scan" << std::endl;
+        std::cerr << it->status().ToString() << std::endl; 
+    }
+    
+    delete it;
+    
+    // Close the database
+    delete db;
 }
-*/
+
