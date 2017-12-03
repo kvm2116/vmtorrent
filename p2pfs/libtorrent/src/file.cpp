@@ -1410,7 +1410,7 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 	}
 
 	size_type file::readv(size_type file_offset, iovec_t const* bufs, int num_bufs, error_code& ec)
-	{
+	{std::cout<<"in size_type file::readv, on libtorrent/src/file.cpp, line 1413\n";
 #ifdef TORRENT_WINDOWS
 		if (m_file_handle == INVALID_HANDLE_VALUE)
 		{
@@ -1436,14 +1436,14 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 
 #ifdef TORRENT_DEBUG
 		if (m_open_mode & no_buffer)
-		{
+                  {std::cout<<"in size_type file::readv, on libtorrent/src/file.cpp line 1439\n";
 			bool eof = false;
 			int size = 0;
 			// when opened in no_buffer mode, the file_offset must
 			// be aligned to pos_alignment()
 			TORRENT_ASSERT((file_offset & (pos_alignment()-1)) == 0);
 			for (file::iovec_t const* i = bufs, *end(bufs + num_bufs); i < end; ++i)
-			{
+                          {std::cout<<"in size_type file::readv, on libtorrent/src/file.cpp, line 1446\n";
 				TORRENT_ASSERT((uintptr_t(i->iov_base) & (buf_alignment()-1)) == 0);
 				// every buffer must be a multiple of the page size
 				// except for the last one
@@ -1453,7 +1453,7 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 			}
 			error_code code;
 			if (eof) 
-			{
+                          {std::cout<<"in size_type file::readv, on libtorrent/src/file.cpp, line 1456\n";
 				size_type fsize = get_size(code);
 				if (code) printf("get_size: %s\n", code.message().c_str());
 				if (file_offset + size < fsize)
@@ -1476,20 +1476,20 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 		// be aligned though
 
 		if ((m_open_mode & no_buffer) == 0)
-		{
+                  {std::cout<<"in size_type file::readv, on libtorrent/src/file.cpp, line 1479\n";
 			// this means the buffer base or the buffer size is not aligned
 			// to the page size. Use a regular file for this operation.
 
 			LARGE_INTEGER offs;
 			offs.QuadPart = file_offset;
 			if (SetFilePointerEx(m_file_handle, offs, &offs, FILE_BEGIN) == FALSE)
-			{
+                          {std::cout<<"in size_type file::readv, on libtorrent/src/file.cpp, line 1486\n";
 				ec.assign(GetLastError(), get_system_category());
 				return -1;
 			}
 
 			for (file::iovec_t const* i = bufs, *end(bufs + num_bufs); i < end; ++i)
-			{
+                          {std::cout<<"in size_type file::readv, on libtorrent/src/file.cpp, line 1492\n";
 				DWORD intermediate = 0;
 				if (ReadFile(m_file_handle, (char*)i->iov_base
 					, (DWORD)i->iov_len, &intermediate, 0) == FALSE)
@@ -1516,7 +1516,7 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 		FILE_SEGMENT_ELEMENT* cur_seg = segment_array;
 
 		for (file::iovec_t const* i = bufs, *end(bufs + num_bufs); i < end; ++i)
-		{
+                  {std::cout<<"in size_type file::readv, on libtorrent/src/file.cpp, line 1519\n";
 			for (int k = 0; k < int(i->iov_len); k += m_page_size)
 			{
 				cur_seg->Buffer = PtrToPtr64((((char*)i->iov_base) + k));
@@ -1591,7 +1591,7 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 
 		ret = 0;
 		while (num_bufs > 0)
-		{
+                  {std::cout<<"in size_type file::readv, on libtorrent/src/file.cpp, line 1594\n";
 			int nbufs = (std::min)(num_bufs, TORRENT_IOV_MAX);
 			int tmp_ret = 0;
 #ifdef TORRENT_LINUX
@@ -1600,13 +1600,13 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 			// if we're not opened in no-buffer mode, we don't need alignment
 			if ((m_open_mode & no_buffer) == 0) aligned = true;
 			if (!aligned)
-			{
+                          {std::cout<<"in size_type file::readv, on libtorrent/src/file.cpp, line 1603\n";
 				size = bufs_size(bufs, nbufs);
 				if ((size & (size_alignment()-1)) == 0) aligned = true;
 			}
 			if (aligned)
 #endif // TORRENT_LINUX
-			{
+                          {std::cout<<"in size_type file::readv, on libtorrent/src/file.cpp, line 1609\n";
 				tmp_ret = ::readv(m_fd, bufs, nbufs);
 				if (tmp_ret < 0)
 				{
@@ -1617,7 +1617,7 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 			}
 #ifdef TORRENT_LINUX
 			else
-			{
+                          {std::cout<<"in size_type file::readv, on libtorrent/src/file.cpp, line 1620\n";
 				file::iovec_t* temp_bufs = TORRENT_ALLOCA(file::iovec_t, nbufs);
 				memcpy(temp_bufs, bufs, sizeof(file::iovec_t) * nbufs);
 				iovec_t& last = temp_bufs[nbufs-1];
@@ -1642,7 +1642,7 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 
 		ret = 0;
 		for (file::iovec_t const* i = bufs, *end(bufs + num_bufs); i < end; ++i)
-		{
+                  {std::cout<<"in size_type file::readv, on libtorrent/src/file.cpp, line 1645\n";
 			int tmp = read(m_fd, i->iov_base, i->iov_len);
 			if (tmp < 0)
 			{
@@ -1660,16 +1660,16 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 	}
 
 	size_type file::writev(size_type file_offset, iovec_t const* bufs, int num_bufs, error_code& ec)
-	{
+	{std::cout<<"in size_type file::writev, on libtorrent/src/file.cpp, line 1663\n";
 #ifdef TORRENT_WINDOWS
 		if (m_file_handle == INVALID_HANDLE_VALUE)
-		{
+                  {std::cout<<"in size_type file::writev, on libtorrent/src/file.cpp, line 1666\n";
 			ec = error_code(ERROR_INVALID_HANDLE, get_system_category());
 			return -1;
 		}
 #else
 		if (m_fd == -1)
-		{
+                  {std::cout<<"in size_type file::writev, on libtorrent/src/file.cpp, line 1672\n";
 			ec = error_code(EBADF, get_system_category());
 			return -1;
 		}
@@ -1686,14 +1686,14 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 
 #ifdef TORRENT_DEBUG
 		if (m_open_mode & no_buffer)
-		{
+                  {std::cout<<"in size_type file::writev, on libtorrent/src/file.cpp, line 1689\n";
 			bool eof = false;
 			int size = 0;
 			// when opened in no_buffer mode, the file_offset must
 			// be aligned to pos_alignment()
 			TORRENT_ASSERT((file_offset & (pos_alignment()-1)) == 0);
 			for (file::iovec_t const* i = bufs, *end(bufs + num_bufs); i < end; ++i)
-			{
+                          {std::cout<<"in size_type file::writev, on libtorrent/src/file.cpp, line 1696\n";
 				TORRENT_ASSERT((uintptr_t(i->iov_base) & (buf_alignment()-1)) == 0);
 				// every buffer must be a multiple of the page size
 				// except for the last one
@@ -1717,7 +1717,7 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 		// be aligned though
 
 		if ((m_open_mode & no_buffer) == 0)
-		{
+                  {std::cout<<"in size_type file::writev, on libtorrent/src/file.cpp, line 1720\n";
 			// this means the buffer base or the buffer size is not aligned
 			// to the page size. Use a regular file for this operation.
 
@@ -1757,7 +1757,7 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 		FILE_SEGMENT_ELEMENT* cur_seg = segment_array;
 
 		for (file::iovec_t const* i = bufs, *end(bufs + num_bufs); i < end; ++i)
-		{
+                  {std::cout<<"in size_type file::writev, on libtorrent/src/file.cpp, line 1760\n";
 			for (int k = 0; k < int(i->iov_len); k += m_page_size)
 			{
 				cur_seg->Buffer = PtrToPtr64((((char*)i->iov_base) + k));
@@ -1775,7 +1775,7 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 		ol.Offset = DWORD(file_offset & 0xffffffff);
 		ol.hEvent = CreateEvent(0, true, false, 0);
 		if (ol.hEvent == NULL)
-		{
+                  {std::cout<<"in size_type file::writev, on libtorrent/src/file.cpp, line 1778\n";
 			ec.assign(GetLastError(), get_system_category());
 			return -1;
 		}
@@ -1784,7 +1784,7 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 		size_type file_size = 0;
 	
 		if ((size & (m_page_size-1)) != 0)
-		{
+                  {std::cout<<"in size_type file::writev, on libtorrent/src/file.cpp, line 1787\n";
 			// if size is not an even multiple, this must be the tail
 			// of the file.
 
@@ -1793,7 +1793,7 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 		}
 
 		if (WriteFileGather(m_file_handle, segment_array, size, 0, &ol) == 0)
-		{
+                  {std::cout<<"in size_type file::writev, on libtorrent/src/file.cpp, line 1796\n";
 			DWORD last_error = GetLastError();
 			if (last_error != ERROR_IO_PENDING
 #ifdef ERROR_CANT_WAIT
@@ -1831,7 +1831,7 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 #else
 		size_type ret = lseek(m_fd, file_offset, SEEK_SET);
 		if (ret < 0)
-		{
+                  {std::cout<<"in size_type file::writev, on libtorrent/src/file.cpp, line 1834\n";
 			ec.assign(errno, get_posix_category());
 			return -1;
 		}
@@ -1840,7 +1840,7 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 
 		ret = 0;
 		while (num_bufs > 0)
-		{
+                  {std::cout<<"in size_type file::writev, on libtorrent/src/file.cpp, line 1843\n";
 			int nbufs = (std::min)(num_bufs, TORRENT_IOV_MAX);
 			int tmp_ret = 0;
 #ifdef TORRENT_LINUX
@@ -1896,7 +1896,7 @@ typedef struct _FILE_ALLOCATED_RANGE_BUFFER {
 
 		ret = 0;
 		for (file::iovec_t const* i = bufs, *end(bufs + num_bufs); i < end; ++i)
-		{
+                  {std::cout<<"in size_type file::writev, on libtorrent/src/file.cpp, line 1899\n";
 			int tmp = write(m_fd, i->iov_base, i->iov_len);
 			if (tmp < 0)
 			{
