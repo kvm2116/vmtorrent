@@ -7,3 +7,5 @@
 *.tar.gz
 *.tgz
 ._*
+./p2pfs/p2p/experiments/keys
+./p2pfs/p2p/experiments/server_ips.txt
