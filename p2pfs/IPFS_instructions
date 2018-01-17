@@ -1,0 +1,223 @@
+Installing IPFS:
+
+https://github.com/ipfs/go-ipfs#build-from-source
+
+- Install Go 1.9+
+		https://golang.org/dl/
+		https://golang.org/doc/install
+		- Download go1.9.2.linux-amd64.tar.gz
+		- sudo tar -C /usr/local -xzf go1.9.2.linux-amd64.tar.gz
+		- Add the following in /etc/profile OR $HOME/.profile 
+			export PATH=$PATH:/usr/local/go/bin
+			export GOPATH=$HOME/go
+			export PATH=$PATH:$GOPATH/bin
+		- source /etc/profile OR source $HOME/.profile
+
+mkdir $HOME/go
+go get -u -d github.com/ipfs/go-ipfs
+cd $GOPATH/src/github.com/ipfs/go-ipfs
+make install
+ipfs init
+##### sudo usermod -G fuse -a <username> ### POSSIBLY NOT REQUIRED
+
+For all commands:
+https://ipfs.io/docs/commands/
+
+Mount:
+sudo mkdir /ipfs /ipns
+sudo chown `whoami` /ipfs /ipns
+ipfs daemon &
+ipfs mount
+
+REQUIRED:
+manually connect the node to the server with the files
+
+
+HOW TO CREATE PRIVATE NETWORK USING SWARM KEY:
+https://github.com/ipfs/go-ipfs/issues/3397#issuecomment-284341649
+
+go get github.com/Kubuxu/go-ipfs-swarm-key-gen/ipfs-swarm-key-gen
+ipfs-swarm-key-gen > ~/.ipfs/swarm.key
+
+To join a given private network, get the key file from someone in the network and save it to ~/.ipfs/swarm.key (If you are using a custom $IPFS_PATH, put it in there instead).
+
+When using this feature, you will not be able to connect to the default bootstrap nodes (Since we arent part of your private network) so you will need to set up your own bootstrap nodes.
+
+To prevent your node from even trying to connect to the default bootstrap nodes, run:
+
+ipfs bootstrap rm --all
+To be extra cautious, You can also set the LIBP2P_FORCE_PNET environment variable to 1 to force the usage of private networks. If no private network is configured, the daemon will fail to start.
+
+
+
+TO UNPIN ALL ADDED CONTENT:
+
+ipfs pin ls --type recursive | cut -d' ' -f1 | xargs -n1 ipfs pin rm
+
+RUN GARBAGE COLLECTION:
+
+ipfs repo gc
+
+
+
+--------------------------------------------------------
+
+Installing CRIU:
+
+Packages required:
+sudo apt-get install libprotobuf-dev libprotobuf-c0-dev protobuf-c-compiler protobuf-compiler python-protobuf libnl-3-dev libcap-dev libaio-dev libxml2-utils xmlto
+
+Also required: asciidoc to let make install work
+https://criu.org/Installation
+https://criu.org/Docker
+
+--------------------------------------------------------
+Docker Images:
+
+sudo apt-get install docker-ce=17.03.2~ce-0~ubuntu-xenial
+sudo echo "{\"experimental\": true}" | sudo tee /etc/docker/daemon.json
+sudo systemctl restart docker
+
+
+https://github.com/PrestaShop/docker
+1.6.1.17
+Image id on ip .236 : 0899a39772f5
+
+Docker image build:
+sudo docker build <path with dockerfile>
+sudo docker run -d --name cart --security-opt seccomp:unconfined -p 80:80 <image ID>
+sudo docker run -d --name cart --security-opt seccomp:unconfined -p 80:80 0899a39772f5
+
+
+
+Docker hub: mkunal
+Quantico12#
+
+Docker help: https://www.howtoforge.com/tutorial/building-and-publishing-custom-docker-images/#building-locally-using-a-dockerfile
+
+sudo docker run -d --name prestacart 46190bf5fdfe
+sudo docker run -d --name looper busybox /bin/sh -c 'i=0; while true; do echo $i; i=$(expr $i + 1); sleep 1; done'
+
+sudo docker run -d --name looper --security-opt seccomp:unconfined busybox /bin/sh -c 'i=0; while true; do echo $i; i=$(expr $i + 1); sleep 1; done'
+sudo docker logs looper
+sudo docker checkpoint create looper checkpoint1
+
+sudo docker start --checkpoint checkpoint2 looper
+
+sudo docker checkpoint create --checkpoint-dir ./checkpoints looper cp
+
+------------------------------------------------------------------------------------------------------------------------------------
+CHECKPOINT AND RESTORE:
+
+sudo docker run -d --name looper --security-opt seccomp:unconfined busybox /bin/sh -c 'i=0; while true; do echo $i; i=$(expr $i + 1); sleep 1; done'
+sudo docker checkpoint create --checkpoint-dir=/repo looper cp2
+sudo chmod 644  <checkpoint-dir>/criu.work/dump.log
+sudo docker start --checkpoint=cp2 --checkpoint-dir=/repo looper
+sudo docker start --checkpoint=cp2 --checkpoint-dir=/ipfs/Qmesok8KS6UuQhTmGb53nYoDcW92UU6jpfbhUAt2Kf1zXt looper
+
+ERRORS:
+mkunal@ms1138:~/1.6.1.17$ sudo docker checkpoint create --checkpoint-dir=/users/mkunal/1.6.1.17/checkpoints cart cart1
+Error response from daemon: Cannot checkpoint container cart: rpc error: code = 2 desc = exit status 1: "criu failed: type NOTIFY errno 0\nlog file: /users/mkunal/1.6.1.17/checkpoints/cart1/criu.work/dump.log\n"
+
+
+------------------------------------------------------------------------------------------------------------------------------------
+EXPORT AND LOAD:
+
+Save docker image as a tar file:
+$ sudo docker export looper > looper.tar
+
+$ ipfs add looper.tar
+--> QmYpTE3fQyE88ZVqVoEoLoa7HxrA2M41ZtmaUWTB8VUwzJ 
+
+Load docker image from tar file:
+$ sudo docker load -i /ipfs/QmYpTE3fQyE88ZVqVoEoLoa7HxrA2M41ZtmaUWTB8VUwzJ
+
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+RSYNC OVER SSH:
+rsync -avzhe ssh mkunal@128.110.153.128:~/go.tar.gz ./
+
+
+------------------------------------------------------------------------------------------------------------------------------------
+sudo docker checkpoint create --checkpoint-dir=/users/mkunal/1.6.1.17/checkpoints cart3 scart3
+sudo docker run -d --name os --security-opt seccomp:unconfined ubuntu
+823d4d6da73aef5458f3780cdc732c6640f118524d9178177fb0b69d0b716010
+sudo docker checkpoint create --checkpoint-dir=/users/mkunal/1.6.1.17/checkpoints cart3 scart3
+Error response from daemon: Cannot checkpoint container cart3: rpc error: code = 2 desc = exit status 1: "criu failed: type NOTIFY errno 0\nlog file: /users/mkunal/1.6.1.17/checkpoints/scart3/criu.work/dump.log\n"
+(00.021916) Dumping path for -3 fd via self 10 [/var/lib/docker/aufs/diff/b12cdac44ac32120f4855a47df2892daece014ef614ff431c880afded81c001c/usr/local/lib/php/extensions/no-debug-non-zts-20131226/zip.so]
+(00.022081) Error (criu/files-reg.c:875): Can't create link remap for /var/lib/docker/aufs/diff/b12cdac44ac32120f4855a47df2892daece014ef614ff431c880afded81c001c/usr/local/lib/php/extensions/no-debug-non-zts-20131226/zip.so. Use link-remap option.
+(00.022102) Error (criu/cr-dump.c:1249): Collect mappings (pid: 21125) failed with -1
+(00.022146) Unlock network
+(00.022155) Running network-unlock scripts
+(00.022160) 	RPC
+iptables-restore: invalid option -- 'w'
+ip6tables-restore: invalid option -- 'w'
+(00.037225) Unfreezing tasks into 1
+(00.037533) Error (criu/cr-dump.c:1709): Dumping FAILED.
+------------------------------------------------------------------------------------------------------------------------------------
+HOW TO RUN EXPERIMENTS:
+
+On Source machine:
+sudo apt-get install python-numpy python-scipy python-matplotlib ipython ipython-notebook python-pandas python-sympy python-nose gnuplot
+
+
+scp dest_ips.txt prep_new_experiment_v2.sh run_trial_v2.sh end_new_experiment_v2.sh parse_tests_v2.py send_rsync_ssh.py receive_rsync.sh parse_logs.py setup_ipfs_peers.py ipfs_peers.txt receive_ipfs.py mkunal@128.110.153.128:~/vmtorrent/p2pfs/p2p/
+scp dest_ips.txt prep_new_experiment_v2.sh run_trial_v2.sh end_new_experiment_v2.sh parse_tests_v2.py send_rsync_ssh.py receive_rsync.sh parse_logs.py setup_ipfs_peers.py ipfs_peers.txt receive_ipfs.py mkunal@128.110.153.189:~/vmtorrent/p2pfs/p2p/
+scp dest_ips.txt prep_new_experiment_v2.sh run_trial_v2.sh end_new_experiment_v2.sh parse_tests_v2.py send_rsync_ssh.py receive_rsync.sh parse_logs.py setup_ipfs_peers.py ipfs_peers.txt receive_ipfs.py mkunal@128.110.153.236:~/vmtorrent/p2pfs/p2p/
+scp dest_ips.txt prep_new_experiment_v2.sh run_trial_v2.sh end_new_experiment_v2.sh parse_tests_v2.py send_rsync_ssh.py receive_rsync.sh parse_logs.py setup_ipfs_peers.py ipfs_peers.txt receive_ipfs.py mkunal@128.110.153.219:~/vmtorrent/p2pfs/p2p/
+
+
+EXAMPLE:
+From ~/test_scripts folder
+./../vmtorrent/p2pfs/p2p/prep_new_experiment_v2.sh
+./../vmtorrent/p2pfs/p2p/run_trial_v2.sh 4 1
+./../vmtorrent/p2pfs/p2p/end_new_experiment_v2.sh 1
+cd test_data_<EXP_NUM>
+python ../../vmtorrent/p2pfs/p2p/parse_logs.py
+
+Order to run the scripts:
+- prep_new_experiment_v2.sh
+- run_trial_v2.sh
+- end_new_experiment_v2.sh 
+- parse_logs.py 
+
+prep_new_experiment_v2.sh:
+	./../vmtorrent/p2pfs/p2p/prep_new_experiment_v2.sh
+	
+
+run_trial_v2.sh:
+	./../vmtorrent/p2pfs/p2p/run_trial_v2.sh <COMMAND> <TRIAL_NUM>
+	Example: 
+	For scp directory: COMMAND = 3
+	For rsync: COMMAND = 4
+
+end_new_experiment_v2.sh:
+	./../vmtorrent/p2pfs/p2p/end_new_experiment_v2.sh <EXP_NUM>
+
+parse_logs.py:
+	python ./../vmtorrent/p2pfs/p2p/parse_logs.py
+
+parse_tests_v2.py:
+	./../vmtorrent/p2pfs/p2p/parse_tests_v2.py
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+HOW TO RUN IPFS EXPERIMENTS:
+
+Add file to IPFS - get ipfs file object
+QmVWQVc2ArjYSXHruCBSugX7ReVoMNgoabccHytvtW1fhv go.tar.gz
+
+Install ipfs on each server
+Run IPFS daemon on each server
+Gather all id's and add to ipfs_peers.txt 
+Send this ipfs_peers.txt to all peers
+Run setup_ipfs_peers.py on all peers. CONNECTS TO ALL PEERS IN THE SWARM
+Disconnect all other peers in the swarm		-- NOT YET IMPLEMENTED
+
+ipfs add go.tar.gz
+./../vmtorrent/p2pfs/p2p/run_trial_v2.sh 5 1 QmVWQVc2ArjYSXHruCBSugX7ReVoMNgoabccHytvtW1fhv
+
+
+time ipfs get QmVWQVc2ArjYSXHruCBSugX7ReVoMNgoabccHytvtW1fhv
+
