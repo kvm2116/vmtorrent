@@ -188,7 +188,7 @@ sudo apt-get install gnuplot
 bwang@dest:~/session_stats$ python ../vmtorrent/p2pfs/libtorrent/tools/parse_session_stats.py 9691.0000.log 
 
 To install VMWARE workstation:
-https://www.hackerway.ch/2015/09/09/how-to-install-vmware-workstation-12-on-ubuntu-14-04-lts/
+http://www.elinuxbook.com/how-to-install-vmware-player-12-on-ubuntu-16-04/
 
 To install Docker:
 Follow these instructions: https://docs.docker.com/engine/installation/linux/ubuntu/
