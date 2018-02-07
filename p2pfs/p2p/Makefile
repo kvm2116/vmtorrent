@@ -79,7 +79,7 @@ test_blaster: test_blaster.o $(P2P_OBJ)
 	$(CXXLINKSIMPLE) -o $@ $^ $(get_vm_LDADD) $(LIBS)
 
 test_p2p: test_p2p.o $(P2P_OBJ)
-	$(CXXLINKSIMPLE) -o $@ $^ $(get_vm_LDADD) $(LIBS) $(LEVELDB_LIBS)
+	$(CXXLINKSIMPLE) -o $@ $^ $(get_vm_LDADD) $(LIBS)
  
 profile_reader: profile_reader.o $(P2P_OBJ)
 	$(CXXLINKSIMPLE) -o $@ $^ $(get_vm_LDADD) $(LIBS)
